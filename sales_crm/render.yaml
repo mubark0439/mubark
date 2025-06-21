@@ -27,3 +27,7 @@ databases:
     plan: free
     databaseName: mbark331122
     user: mbark331122
+
+buildCommand: |
+  pip install -r requirements.txt
+  python manage.py collectstatic --noinput    
