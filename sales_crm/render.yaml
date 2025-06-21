@@ -5,7 +5,7 @@ services:
     name: mubark  # استبدل باسم تطبيقك
     runtime: python
     buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    startCommand: startCommand: python manage.py runserver 0.0.0.0:$PORT
+    startCommand: startCommand: gunicorn sales_crm.sales_crm.wsgi:application
   # استبدل your_project باسم مشروعك
     env: python
     plan: free  # الخطة المجانية
@@ -13,7 +13,7 @@ services:
       - key: PYTHONPATH
         value: /opt/render/project/src  # أو أي إصدار تدعمه Render
       - key: DJANGO_SETTINGS_MODULE
-        value: DJANGO_SETTINGS_MODULE  # استبدل your_project باسم مشروعك
+        value: sales_crm.settings  # استبدل your_project باسم مشروعك
       - key: SECRET_KEY
         generateValue: true
       - key: WEB_CONCURRENCY
