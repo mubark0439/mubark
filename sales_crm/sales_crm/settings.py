@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -26,7 +27,7 @@ SECRET_KEY = 'django-insecure-f=*(&o+3cu@%tu82ev50bp$iwx8=fr&!=-8eo4lw!ap*=nfoy+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['onrender.com']
 
 
 # Application definition
@@ -90,7 +91,6 @@ WSGI_APPLICATION = 'sales_crm.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
 import dj_database_url
 
 DATABASES = {
