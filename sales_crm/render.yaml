@@ -29,5 +29,9 @@ databases:
     user: mbark331122
 
 buildCommand: |
-  pip install -r requirements.txt
-  python manage.py collectstatic --noinput    
+  if [ ! -f "requirements.txt" ]; then
+    echo "Error: Missing requirements.txt!"
+    ls -la
+    exit 1
+  fi
+  pip install -r requirements.txt   
