@@ -1,38 +1,19 @@
-# render.yaml - ملف تكوين نشر Render.com
-
 services:
   - type: web
-    name: mubark  # استبدل باسم تطبيقك
+    name: mubark
     runtime: python
-    buildCommand: pip install -r requirements.txt && python manage.py collectstatic --noinput
-    startCommand: startCommand: gunicorn sales_crm.sales_crm.wsgi:application
-  # استبدل your_project باسم مشروعك
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+    startCommand: gunicorn sales_crm.wsgi:application  # تصحيح هنا
     env: python
-    plan: free  # الخطة المجانية
+    plan: free
     envVars:
       - key: PYTHONPATH
-        value: /opt/render/project/src  # أو أي إصدار تدعمه Render
+        value: /opt/render/project/src
       - key: DJANGO_SETTINGS_MODULE
-        value: sales_crm.settings  # استبدل your_project باسم مشروعك
+        value: sales_crm.settings
       - key: SECRET_KEY
         generateValue: true
       - key: WEB_CONCURRENCY
         value: 4
-    database:
-      name: 'db.sqlite3'  # اختر اسمًا لقاعدة البيانات
-      plan: free  # الخطة المجانية
-
-# إعدادات قواعد البيانات (اختياري)
-databases:
-  - name: 'db.sqlite3'  # نفس الاسم المذكور أعلاه
-    plan: free
-    databaseName: 'db.sqlite3'
-    user: 'db.sqlite3'
-
-buildCommand: |
-  if [ ! -f "requirements.txt" ]; then
-    echo "Error: Missing requirements.txt!"
-    ls -la
-    exit 1
-  fi
-  pip install -r requirements.txt   
