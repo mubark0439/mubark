@@ -5,7 +5,7 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python manage.py collectstatic --noinput
-    startCommand: gunicorn sales_crm.sales_crm.wsgi:application  # تصحيح هنا
+    startCommand: 'sales_crm.wsgi.application'  # تصحيح هنا
     env: python
     plan: free
     envVars:
