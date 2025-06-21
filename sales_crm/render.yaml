@@ -19,15 +19,15 @@ services:
       - key: WEB_CONCURRENCY
         value: 4
     database:
-      name: mbark331122  # اختر اسمًا لقاعدة البيانات
+      name: 'db.sqlite3'  # اختر اسمًا لقاعدة البيانات
       plan: free  # الخطة المجانية
 
 # إعدادات قواعد البيانات (اختياري)
 databases:
-  - name: mbark331122  # نفس الاسم المذكور أعلاه
+  - name: 'db.sqlite3'  # نفس الاسم المذكور أعلاه
     plan: free
-    databaseName: mbark331122
-    user: mbark331122
+    databaseName: 'db.sqlite3'
+    user: 'db.sqlite3'
 
 buildCommand: |
   if [ ! -f "requirements.txt" ]; then
