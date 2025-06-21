@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card product-detail-card shadow-lg">
+        <div class="card-header text-white" style="background-color: #051837;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h4 class="mb-0"><i class="fas fa-box me-2"></i>تفاصيل المنتج</h4>
+                <div>
+                    <a href="{% url 'products:product-update' product.pk %}" class="btn btn-warning btn-sm">
+                        <i class="fas fa-edit me-1"></i> تعديل
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-5">
+                    <div class="product-image-container">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" class="product-main-image" alt="{{ product.name }}">
+                        {% else %}
+                            <div class="no-image-large">
+                                <i class="fas fa-box-open fa-4x"></i>
+                                <p>لا توجد صورة</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-7">
+                    <h3 class="product-name">{{ product.name }}</h3>
+                    
+                    <div class="product-info-grid">
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-tag me-2"></i>الفئة:</span>
+                            <span class="info-value">{{ product.category.name }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-money-bill-wave me-2"></i>السعر:</span>
+                            <span class="info-value">{{ product.price }} ر.س</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-money-bill me-2"></i>التكلفة:</span>
+                            <span class="info-value">{{ product.cost }} ر.س</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-cubes me-2"></i>الكمية:</span>
+                            <span class="info-value">{{ product.quantity }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-barcode me-2"></i>الباركود:</span>
+                            <span class="info-value">{{ product.barcode|default:"-" }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label"><i class="fas fa-calendar-alt me-2"></i>آخر تحديث:</span>
+                            <span class="info-value">{{ product.updated_at|date:"Y-m-d H:i" }}</span>
+                        </div>
+                    </div>
+                    
+                    {% if product.description %}
+                    <div class="product-description mt-4">
+                        <h5><i class="fas fa-align-left me-2"></i>الوصف:</h5>
+                        <p>{{ product.description }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-4 text-center">
+                <a href="{% url 'products:product-list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i> العودة للقائمة
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* الهوية البصرية */
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+    }
+
+    .product-detail-card {
+        border-radius: 12px;
+        border: none;
+    }
+    
+    .product-image-container {
+        border: 1px solid #eee;
+        border-radius: 8px;
+        padding: 1rem;
+        background-color: #f8f9fa;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .product-main-image {
+        max-width: 100%;
+        max-height: 400px;
+        object-fit: contain;
+        border-radius: 8px;
+    }
+    
+    .no-image-large {
+        text-align: center;
+        color: #6c757d;
+        padding: 2rem;
+    }
+    
+    .no-image-large i {
+        margin-bottom: 1rem;
+    }
+    
+    .product-name {
+        color: var(--primary-color);
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid var(--primary-light);
+    }
+    
+    .product-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+    
+    .info-item {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: var(--primary-color);
+        display: block;
+        margin-bottom: 0.25rem;
+    }
+    
+    .info-value {
+        display: block;
+    }
+    
+    .product-description {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+    }
+    
+    @media (max-width: 992px) {
+        .product-info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .product-image-container {
+            margin-bottom: 2rem;
+            height: auto;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+
+{% block title %}لوحة التحكم{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="background-color: #f8f9fa;">
+    <!-- العنوان الرئيسي مع شعار الهوية -->
+    <div class="row mb-4">
+        <div class="col-12 d-flex align-items-center">
+            <div style="width: 50px; height: 50px; background-color: #051837; border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-left: 15px;">
+                <i class="fas fa-chart-line fa-lg text-white"></i>
+            </div>
+            <h1 class="mb-0" style="color: #051837;">لوحة التحكم</h1>
+        </div>
+    </div>
+
+    <!-- بطاقات الإحصائيات -->
+    <div class="row">
+        <!-- بطاقة عدد العملاء -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border-left: 4px solid #051837;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-muted mb-1" style="font-size: 0.9rem;">
+                                عدد العملاء</div>
+                            <div class="h4 mb-0 font-weight-bold" style="color: #051837;">{{ total_customers }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x" style="color: #051837; opacity: 0.2;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة عدد المنتجات -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border-left: 4px solid #28a745;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-muted mb-1" style="font-size: 0.9rem;">
+                                عدد المنتجات</div>
+                            <div class="h4 mb-0 font-weight-bold" style="color: #051837;">{{ total_products }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-boxes fa-2x" style="color: #28a745; opacity: 0.2;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة المنتجات النافذة -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border-left: 4px solid #dc3545;">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-muted mb-1" style="font-size: 0.9rem;">
+                                المنتجات النافذة</div>
+                            <div class="h4 mb-0 font-weight-bold" style="color: #051837;">{{ out_of_stock_products }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-exclamation-triangle fa-2x" style="color: #dc3545; opacity: 0.2;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة المبيعات والربح -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-0 shadow-sm h-100" style="border-radius: 12px; border-left: 4px solid #17a2b8;">
+                <div class="card-body">
+                    <!-- المبيعات اليومية -->
+                    <div class="row no-gutters align-items-center mb-3">
+                        <div class="col mr-2">
+                            <div class="text-muted mb-1" style="font-size: 0.9rem;">
+                                المبيعات اليومية</div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #051837;">
+                                {{ daily_sales.net|floatformat:2 }} ر.س
+                                {% if daily_sales.returns > 0 %}
+                                <small class="text-danger">(خصم مرتجعات: {{ daily_sales.returns|floatformat:2 }} ر.س)</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-sun" style="color: #17a2b8;"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- المبيعات الشهرية -->
+                    <div class="row no-gutters align-items-center mb-3">
+                        <div class="col mr-2">
+                            <div class="text-muted mb-1" style="font-size: 0.9rem;">
+                                المبيعات الشهرية</div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #051837;">
+                                {{ monthly_sales.net|floatformat:2 }} ر.س
+                                {% if monthly_sales.returns > 0 %}
+                                <small class="text-danger">(خصم مرتجعات: {{ monthly_sales.returns|floatformat:2 }} ر.س)</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar" style="color: #051837;"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- إجمالي الربح -->
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-muted mb-1" style="font-size: 0.9rem;">
+                                إجمالي الربح</div>
+                            <div class="h5 mb-0 font-weight-bold" style="color: #051837;">
+                                {{ monthly_profit.net|floatformat:2 }} ر.س
+                                {% if monthly_profit.returns > 0 %}
+                                <small class="text-danger">(خصم مرتجعات: {{ monthly_profit.returns|floatformat:2 }} ر.س)</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-chart-line" style="color: #28a745;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- محتوى إضافي -->
+    <div class="row mt-4">
+        <!-- قسم العملاء -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #051837; border-radius: 12px 12px 0 0 !important;">
+                    <h6 class="m-0 font-weight-bold text-white">آخر العملاء</h6>
+                    <a href="{% url 'core:customer-list' %}" class="btn btn-sm btn-light" style="border-radius: 8px;">عرض الكل</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="color: #051837;">الاسم</th>
+                                    <th style="color: #051837;">الهاتف</th>
+                                    <th style="color: #051837;">التاريخ</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in recent_customers %}
+                                <tr>
+                                    <td>{{ customer.name }}</td>
+                                    <td>{{ customer.phone }}</td>
+                                    <td>{{ customer.created_at|date:"Y/m/d" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">لا يوجد عملاء مسجلين</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- قسم المنتجات النافذة -->
+        <div class="col-md-6 mb-4">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #dc3545; border-radius: 12px 12px 0 0 !important;">
+                    <h6 class="m-0 font-weight-bold text-white">المنتجات النافذة</h6>
+                    <a href="{% url 'products:product-list' %}?q=out_of_stock" class="btn btn-sm btn-light" style="border-radius: 8px;">عرض الكل</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="color: #051837;">اسم المنتج</th>
+                                    <th style="color: #051837;">السعر</th>
+                                    <th style="color: #051837;">المتبقي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in out_of_stock_items %}
+                                <tr>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.price }} ر.س</td>
+                                    <td>{{ product.quantity }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center">لا يوجد منتجات نافذة</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- قسم المرتجعات الحديثة -->
+    <div class="row mt-4">
+        
+        <div class="col-md-12 mb-4">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #ffc107; border-radius: 12px 12px 0 0 !important;">
+                    <h6 class="m-0 font-weight-bold text-dark">آخر المرتجعات</h6>
+                    <a href="{% url 'sales:return-list' %}" class="btn btn-sm btn-light" style="border-radius: 8px;">عرض الكل</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="color: #051837;">رقم المرتجع</th>
+                                    <th style="color: #051837;">الفاتورة الأصلية</th>
+                                    <th style="color: #051837;">التاريخ</th>
+                                    <th style="color: #051837;">المبلغ</th>
+                                    <th style="color: #051837;">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for return in recent_returns %}
+                                <tr>
+                                    <td>{{ return.return_number }}</td>
+                                    <td>{{ return.sale.invoice_number }}</td>
+                                    <td>{{ return.return_date|date:"Y/m/d" }}</td>
+                                    <td>{{ return.total_amount }} ر.س</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if return.status == 'completed' %}bg-success
+                                            {% elif return.status == 'approved' %}bg-info
+                                            {% elif return.status == 'rejected' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ return.get_status_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">لا توجد مرتجعات مسجلة</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- معلومات التصحيح -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+                <div class="card-header" style="background-color: #051837; color: white; border-radius: 12px 12px 0 0 !important;">
+                    معلومات النظام
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div style="width: 40px; height: 40px; background-color: rgba(5, 24, 55, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-left: 10px;">
+                                    <i class="fas fa-calendar-day" style="color: #051837;"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 text-muted">تاريخ اليوم</p>
+                                    <p class="mb-0 font-weight-bold" style="color: #051837;">{{ today|date:"Y-m-d" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div style="width: 40px; height: 40px; background-color: rgba(5, 24, 55, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-left: 10px;">
+                                    <i class="fas fa-calendar-alt" style="color: #051837;"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 text-muted">الشهر الحالي</p>
+                                    <p class="mb-0 font-weight-bold" style="color: #051837;">{{ current_month }}-{{ current_year }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div style="width: 40px; height: 40px; background-color: rgba(5, 24, 55, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-left: 10px;">
+                                    <i class="fas fa-clock" style="color: #051837;"></i>
+                                </div>
+                                <div>
+                                    <p class="mb-0 text-muted">آخر تحديث</p>
+                                    <p class="mb-0 font-weight-bold" style="color: #051837;">{% now "H:i" %}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

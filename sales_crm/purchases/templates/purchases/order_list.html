@@ -1,0 +1,537 @@
+{% extends "base.html" %}
+
+{% block title %}أوامر الشراء{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- العنوان وأزرار الإجراءات -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-container me-3">
+                <i class="fas fa-shopping-cart fa-lg"></i>
+            </div>
+            <h1 class="page-title mb-0">أوامر الشراء</h1>
+        </div>
+        <div class="action-buttons">
+            <a href="{% url 'purchases:order-create' %}" class="btn btn-primary main-action-btn">
+                <span class="icon-circle me-2">
+                    <i class="fas fa-plus"></i>
+                </span>
+                أمر شراء جديد
+            </a>
+            <a href="{% url 'purchases:supplier-list' %}" class="btn btn-outline-primary ms-2 pos-btn">
+                <i class="fas fa-truck me-2"></i> الموردون
+            </a>
+        </div>
+    </div>
+
+    <!-- بطاقة قائمة أوامر الشراء -->
+    <div class="card content-card shadow-lg">
+        <div class="card-header py-3 text-white" style="background-color: #051837;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-list me-2"></i>
+                    <h6 class="m-0 font-weight-bold">قائمة أوامر الشراء</h6>
+                </div>
+                <form method="get" class="search-form">
+                    <div class="input-group search-group">
+                        <input type="text" 
+                               name="q" 
+                               class="form-control search-input" 
+                               placeholder="ابحث عن أمر شراء..." 
+                               value="{{ request.GET.q }}"
+                               aria-label="بحث عن أوامر شراء">
+                        <button class="btn btn-outline-light search-btn" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        {% if request.GET.q %}
+                        <a href="{% url 'purchases:order-list' %}" class="btn btn-outline-light" title="إعادة تعيين">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table product-table">
+                    <thead>
+                        <tr>
+                            <th width="5%">#</th>
+                            <th>رقم الأمر</th>
+                            <th>المورد</th>
+                            <th width="15%">تاريخ الطلب</th>
+                            <th width="12%">الحالة</th>
+                            <th width="15%">المبلغ الإجمالي</th>
+                            <th width="15%">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in orders %}
+                        <tr class="product-row">
+                            <td>{{ forloop.counter }}</td>
+                            <td>#{{ order.id }}</td>
+                            <td>{{ order.supplier.name }}</td>
+                            <td>{{ order.order_date|date:"Y-m-d" }}</td>
+                            <td>
+                                {% if order.status == 'draft' %}
+                                <span class="badge bg-secondary">مسودة</span>
+                                {% elif order.status == 'approved' %}
+                                <span class="badge bg-warning text-dark">معتمدة</span>
+                                {% elif order.status == 'received' %}
+                                <span class="badge bg-success">مستلمة</span>
+                                {% else %}
+                                <span class="badge bg-danger">ملغاة</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ order.total }} ر.س</td>
+                            <td>
+                                <div class="btn-group product-actions">
+                                    <a href="{% url 'purchases:order-detail' order.pk %}" 
+                                       class="btn btn-outline-info"
+                                       data-bs-toggle="tooltip" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'purchases:order-update' order.pk %}" 
+                                       class="btn btn-outline-warning"
+                                       data-bs-toggle="tooltip" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if order.status == 'draft' %}
+                                    <a href="{% url 'purchases:order-delete' order.pk %}" 
+                                       class="btn btn-outline-danger"
+                                       data-bs-toggle="tooltip" title="حذف"
+                                       onclick="return confirm('هل أنت متأكد من حذف أمر الشراء #{{ order.id }}؟')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 empty-state">
+                                <div class="empty-content">
+                                    <i class="fas fa-shopping-cart empty-icon"></i>
+                                    <p class="empty-text">لا يوجد أوامر شراء مسجلة</p>
+                                    <a href="{% url 'purchases:order-create' %}" class="btn btn-primary empty-btn">
+                                        <i class="fas fa-plus me-2"></i> إنشاء أمر شراء جديد
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- الترقيم الصفحي -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link pagination-prev" 
+                           href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                            <i class="fas fa-chevron-right me-1"></i> السابق
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link pagination-active">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link pagination-link" 
+                           href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link pagination-next" 
+                           href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                            التالي <i class="fas fa-chevron-left ms-1"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* أنماط متسقة مع صفحة الموردين */
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+        --primary-lighter: rgba(5, 24, 55, 0.05);
+        --secondary-color: #2c3e50;
+        --accent-color: #3498db;
+    }
+
+    .search-form {
+        width: 300px;
+    }
+    
+    .search-group {
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input {
+        border: none;
+        padding: 0.75rem 1rem;
+        background-color: rgba(255, 255, 255, 0.1);
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .search-input:focus {
+        background-color: rgba(255, 255, 255, 0.2);
+        color: white;
+        box-shadow: none;
+    }
+    
+    .search-btn {
+        background-color: rgba(255, 255, 255, 0.1);
+        border: none;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    
+    .search-btn:hover {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .icon-container {
+        width: 50px;
+        height: 50px;
+        background-color: var(--primary-light);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .icon-container i {
+        color: var(--primary-color);
+    }
+    
+    .page-title {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .content-card {
+        border-radius: 12px;
+        border: 1px solid var(--primary-light);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+    
+    .main-action-btn {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .icon-circle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+    
+    .main-action-btn:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(5, 24, 55, 0.25);
+    }
+    
+    .main-action-btn:hover .icon-circle {
+        background-color: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+    
+    .pos-btn {
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 500;
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .pos-btn:hover {
+        background-color: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(5, 24, 55, 0.2);
+    }
+
+    .pos-btn:active {
+        transform: translateY(0);
+    }
+
+    .pos-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: 0.5s;
+    }
+
+    .pos-btn:hover::before {
+        left: 100%;
+    }
+
+    .pos-btn i {
+        transition: transform 0.3s ease;
+    }
+
+    .pos-btn:hover i {
+        transform: scale(1.1);
+    }
+    
+    .product-table {
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .product-table thead th {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+        font-weight: 600;
+        padding: 12px 15px;
+        border-bottom: 2px solid var(--primary-color);
+        vertical-align: middle;
+    }
+    
+    .product-table tbody td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .product-row:hover {
+        background-color: var(--primary-lighter);
+    }
+    
+    .product-actions .btn {
+        padding: 0.4rem 0.8rem;
+        border-radius: 0;
+        transition: all 0.2s ease;
+    }
+    
+    .product-actions .btn:first-child {
+        border-radius: 6px 0 0 6px;
+    }
+    
+    .product-actions .btn:last-child {
+        border-radius: 0 6px 6px 0;
+    }
+    
+    .product-actions .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .empty-state {
+        padding: 3rem 0;
+    }
+    
+    .empty-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .empty-icon {
+        font-size: 2.5rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+        opacity: 0.7;
+    }
+    
+    .empty-text {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+    }
+    
+    .empty-btn {
+        border-radius: 8px;
+        padding: 0.6rem 1.5rem;
+    }
+    
+    .pagination {
+        margin-top: 2rem;
+    }
+    
+    .page-link {
+        color: var(--primary-color);
+        border-radius: 8px;
+        margin: 0 3px;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+    
+    .pagination-prev, .pagination-next {
+        display: flex;
+        align-items: center;
+    }
+    
+    .pagination-active {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        color: white;
+    }
+    
+    .page-link:hover {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+    }
+    
+    @media (max-width: 992px) {
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .search-form {
+            width: 100%;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .action-buttons {
+            width: 100%;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .main-action-btn, .pos-btn {
+            width: 100%;
+            margin: 0.25rem 0;
+            text-align: center;
+        }
+        
+        .pos-btn {
+            margin-left: 0 !important;
+        }
+        
+        .product-table thead {
+            display: none;
+        }
+        
+        .product-row {
+            display: block;
+            margin-bottom: 1.5rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 0.5rem;
+            position: relative;
+        }
+        
+        .product-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f8f9fa;
+            padding: 0.75rem;
+            text-align: right;
+        }
+        
+        .product-table td:before {
+            content: attr(data-label);
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 10px;
+        }
+        
+        .product-table td:last-child {
+            border-bottom: none;
+            justify-content: center;
+            padding-top: 1rem;
+        }
+        
+        .empty-btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تفعيل أدوات التلميح
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // إضافة بيانات-label للعرض على الجوال
+    if (window.innerWidth <= 768) {
+        const headers = document.querySelectorAll('.product-table thead th');
+        const cells = document.querySelectorAll('.product-table tbody td');
+        
+        headers.forEach((header, index) => {
+            const label = header.textContent.trim();
+            cells.forEach(cell => {
+                if (cell.cellIndex === index) {
+                    cell.setAttribute('data-label', label);
+                }
+            });
+        });
+    }
+    
+    // حفظ حالة البحث عند الترقيم الصفحي
+    const paginationLinks = document.querySelectorAll('.page-link');
+    paginationLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            const searchQuery = new URLSearchParams(window.location.search).get('q');
+            if (searchQuery) {
+                if (!this.href.includes('q=')) {
+                    this.href += `&q=${searchQuery}`;
+                }
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}حذف مرتجع شراء - {{ return_entry.return_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-card {
+        border-radius: 12px;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+    
+    .delete-header {
+        border-radius: 12px 12px 0 0 !important;
+        background-color: #dc3545 !important;
+    }
+    
+    .warning-icon {
+        font-size: 3rem;
+        color: #dc3545;
+        margin-bottom: 1.5rem;
+    }
+    
+    .delete-message {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        text-align: center;
+    }
+    
+    .action-buttons {
+        gap: 1rem;
+    }
+    
+    .return-details {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin: 1rem 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card delete-card shadow-lg">
+                <div class="card-header delete-header text-white py-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <h4 class="m-0 font-weight-bold">تأكيد حذف مرتجع الشراء</h4>
+                        </div>
+                        <span class="badge bg-white text-danger">{{ return_entry.return_number }}</span>
+                    </div>
+                </div>
+                <div class="card-body text-center py-4">
+                    <div class="warning-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    
+                    <div class="delete-message mb-4">
+                        <p class="lead">أنت على وشك حذف مرتجع الشراء رقم <strong class="text-danger">{{ return_entry.return_number }}</strong></p>
+                        <p class="text-muted">هذا الإجراء سيحذف جميع البيانات المرتبطة بهذا المرتجع ولا يمكن التراجع عنه.</p>
+                        
+                        <div class="return-details text-start">
+                            <p><strong>أمر الشراء:</strong> #{{ return_entry.purchase_order.id }}</p>
+                            <p><strong>تاريخ المرتجع:</strong> {{ return_entry.return_date|date:"Y-m-d" }}</p>
+                            <p><strong>إجمالي المبلغ:</strong> {{ return_entry.total_amount }} ر.س</p>
+                        </div>
+                        
+                        {% if return_entry.return_items.count > 0 %}
+                        <div class="alert alert-danger mt-3">
+                            <i class="fas fa-box-open me-2"></i>
+                            سيتم حذف <strong>{{ return_entry.return_items.count }}</strong> أصناف مرتبطة بهذا المرتجع
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center action-buttons">
+                            <a href="{% url 'purchases:return-detail' pk=return_entry.pk %}" 
+                               class="btn btn-outline-secondary px-4">
+                                <i class="fas fa-times me-2"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-danger px-4">
+                                <i class="fas fa-trash me-2"></i> تأكيد الحذف
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

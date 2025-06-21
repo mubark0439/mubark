@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #051837; border-radius: 12px 12px 0 0 !important;">
+            <h4 class="m-0 text-white">
+                {% if form.instance.pk %}
+                    <i class="fas fa-user-edit me-2"></i>تعديل بيانات الموظف
+                {% else %}
+                    <i class="fas fa-user-plus me-2"></i>إضافة موظف جديد
+                {% endif %}
+            </h4>
+            <a href="{% url 'core:employee-list' %}" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> رجوع
+            </a>
+        </div>
+        
+        <div class="card-body">
+            <div class="alert alert-info d-flex align-items-center">
+                <i class="fas fa-info-circle me-3 fa-lg"></i>
+                <div>
+                    <strong>ملاحظة:</strong> الحقول المميزة بعلامة <span class="text-danger">*</span> إلزامية
+                </div>
+            </div>
+            
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle me-2 fa-lg"></i>
+                        <div>
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+                
+                <div class="row g-4">
+                    <!-- الصف الأول -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.username.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-user me-1"></i>اسم المستخدم <span class="text-danger">*</span>
+                            </label>
+                            {{ form.username }}
+                            <div class="invalid-feedback">
+                                يرجى إدخال اسم مستخدم صحيح
+                            </div>
+                            <small class="form-text text-muted">يجب أن يكون اسم المستخدم فريداً</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-envelope me-1"></i>البريد الإلكتروني <span class="text-danger">*</span>
+                            </label>
+                            {{ form.email }}
+                            <small class="form-text text-muted">example@domain.com</small>
+                        </div>
+                    </div>
+                    
+                    <!-- الصف الثاني -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.role.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-user-tag me-1"></i>الدور <span class="text-danger">*</span>
+                            </label>
+                            {% if request.user.is_admin and not is_current_user %}
+                                {{ form.role }}
+                            {% else %}
+                                <input type="text" class="form-control" value="{{ form.instance.get_role_display }}" readonly>
+                                <small class="text-muted">لا يمكن تغيير دور المدير الحالي</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.phone.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-phone me-1"></i>رقم الهاتف
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">+966</span>
+                                {{ form.phone }}
+                            </div>
+                            <small class="form-text text-muted">05XXXXXXXX</small>
+                        </div>
+                    </div>
+                    
+                    <!-- الصف الثالث - حالة الموظف وتاريخ التعيين -->
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-user-clock me-1"></i>حالة الموظف <span class="text-danger">*</span>
+                            </label>
+                            {{ form.status }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.joining_date.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-calendar-alt me-1"></i>تاريخ التعيين
+                            </label>
+                            {{ form.joining_date }}
+                        </div>
+                    </div>
+                    
+                    <!-- الصف الرابع - الرواتب والبدلات -->
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.basic_salary.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-money-bill-wave me-1"></i>الراتب الأساسي
+                            </label>
+                            <div class="input-group">
+                                {{ form.basic_salary }}
+                                <span class="input-group-text">ر.س</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.housing_allowance.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-home me-1"></i>بدل السكن
+                            </label>
+                            <div class="input-group">
+                                {{ form.housing_allowance }}
+                                <span class="input-group-text">ر.س</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.transportation_allowance.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-car me-1"></i>بدل النقل
+                            </label>
+                            <div class="input-group">
+                                {{ form.transportation_allowance }}
+                                <span class="input-group-text">ر.س</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- عرض الراتب الإجمالي -->
+                    <div class="col-12">
+                        <div class="alert alert-primary d-flex align-items-center">
+                            <i class="fas fa-calculator me-3 fa-lg"></i>
+                            <div>
+                                <strong>الراتب الإجمالي:</strong> 
+                                <span id="total-salary" class="fw-bold">{{ total_salary|default:0 }}</span> ر.س
+                                (أساسي + بدل سكن + بدل نقل)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- حقل تاريخ إنهاء الخدمة (يظهر فقط إذا كان الموظف مستقيل أو مفصول) -->
+                    <div class="col-md-6" id="termination-date-container" 
+                         style="display: {% if form.instance.status in 'resigned,terminated' or form.status.value in 'resigned,terminated' %}block{% else %}none{% endif %};">
+                        <div class="form-group">
+                            <label for="{{ form.termination_date.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-calendar-times me-1"></i>تاريخ إنهاء الخدمة
+                            </label>
+                            {{ form.termination_date }}
+                        </div>
+                    </div>
+                    
+                    <!-- حقول كلمة المرور (تظهر فقط عند الإضافة) -->
+                    {% if not form.instance.pk %}
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.password1.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-lock me-1"></i>كلمة المرور <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form.password1 }}
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword1">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-requirements mt-2">
+                                <small class="d-block"><i class="fas fa-check-circle text-success me-1"></i> 8 أحرف على الأقل</small>
+                                <small class="d-block"><i class="fas fa-check-circle text-success me-1"></i> تحتوي على أرقام</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.password2.id_for_label }}" class="form-label fw-bold text-dark">
+                                <i class="fas fa-lock me-1"></i>تأكيد كلمة المرور <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form.password2 }}
+                                <button class="btn btn-outline-secondary" type="button" id="togglePassword2">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-flex justify-content-between mt-5 border-top pt-4">
+                    {% if form.instance.pk %}
+                    <a href="{% url 'core:employee-delete' form.instance.pk %}" class="btn btn-outline-danger">
+                        <i class="fas fa-trash-alt me-1"></i> حذف الموظف
+                    </a>
+                    {% else %}
+                    <div></div> <!-- مساحة فارغة للمحاذاة -->
+                    {% endif %}
+                    
+                    <div>
+                        <button type="reset" class="btn btn-secondary me-2">
+                            <i class="fas fa-undo me-1"></i> إعادة تعيين
+                        </button>
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="fas fa-save me-1"></i> حفظ التغييرات
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 12px 15px;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s;
+        height: auto;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #051837;
+        box-shadow: 0 0 0 0.25rem rgba(5, 24, 55, 0.1);
+    }
+    
+    .form-label {
+        margin-bottom: 8px;
+        color: #051837;
+        font-weight: 600;
+    }
+    
+    .input-group-text {
+        background-color: #f8f9fa;
+    }
+    
+    .password-requirements {
+        background-color: #f8f9fa;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+    
+    .btn {
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    
+    .btn-primary {
+        background-color: #051837;
+        border-color: #051837;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0a2c5e;
+        border-color: #0a2c5e;
+    }
+    
+    .btn-outline-secondary {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+    
+    .invalid-feedback {
+        display: none;
+        color: #dc3545;
+        font-size: 0.85rem;
+    }
+    
+    .was-validated .form-control:invalid ~ .invalid-feedback,
+    .was-validated .form-control:invalid ~ .invalid-feedback {
+        display: block;
+    }
+    
+    /* تنسيق خاص لحالة الموظف */
+    .form-select option[value="active"] { color: #28a745; }
+    .form-select option[value="vacation"] { color: #ffc107; }
+    .form-select option[value="resigned"] { color: #6c757d; }
+    .form-select option[value="terminated"] { color: #dc3545; }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // إظهار/إخفاء كلمة المرور
+        function setupPasswordToggle(inputId, buttonId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleButton = document.getElementById(buttonId);
+            
+            if (passwordInput && toggleButton) {
+                toggleButton.addEventListener('click', function() {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    
+                    const icon = this.querySelector('i');
+                    icon.classList.toggle('fa-eye');
+                    icon.classList.toggle('fa-eye-slash');
+                });
+            }
+        }
+        
+        {% if not form.instance.pk %}
+        setupPasswordToggle('{{ form.password1.id_for_label }}', 'togglePassword1');
+        setupPasswordToggle('{{ form.password2.id_for_label }}', 'togglePassword2');
+        {% endif %}
+        
+        // حساب الراتب الإجمالي تلقائياً
+        function calculateTotalSalary() {
+            const basic = parseFloat(document.getElementById('{{ form.basic_salary.id_for_label }}').value) || 0;
+            const housing = parseFloat(document.getElementById('{{ form.housing_allowance.id_for_label }}').value) || 0;
+            const transport = parseFloat(document.getElementById('{{ form.transportation_allowance.id_for_label }}').value) || 0;
+            const total = basic + housing + transport;
+            document.getElementById('total-salary').textContent = total.toFixed(2);
+        }
+
+        // استماع لتغييرات حقول الرواتب
+        ['{{ form.basic_salary.id_for_label }}', 
+         '{{ form.housing_allowance.id_for_label }}', 
+         '{{ form.transportation_allowance.id_for_label }}'].forEach(id => {
+            const field = document.getElementById(id);
+            if (field) {
+                field.addEventListener('input', calculateTotalSalary);
+            }
+        });
+
+        // حساب أولي عند تحميل الصفحة
+        calculateTotalSalary();
+        
+        // التحقق من صحة النموذج
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(form => {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+        
+        // إضافة مساعدة للهاتف
+        const phoneField = document.getElementById('{{ form.phone.id_for_label }}');
+        if (phoneField) {
+            phoneField.addEventListener('input', function(e) {
+                this.value = this.value.replace(/[^0-9]/g, '');
+                if (this.value.length > 9) {
+                    this.value = this.value.slice(0, 9);
+                }
+            });
+        }
+        
+        // إظهار/إخفاء حقل تاريخ إنهاء الخدمة بناءً على حالة الموظف
+        const statusField = document.getElementById('{{ form.status.id_for_label }}');
+        if (statusField) {
+            statusField.addEventListener('change', function() {
+                const terminationDateContainer = document.getElementById('termination-date-container');
+                if (terminationDateContainer) {
+                    if (this.value === 'resigned' || this.value === 'terminated') {
+                        terminationDateContainer.style.display = 'block';
+                    } else {
+                        terminationDateContainer.style.display = 'none';
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

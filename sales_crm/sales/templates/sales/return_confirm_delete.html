@@ -1,0 +1,66 @@
+{% extends "sales/base_sales.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #051837;
+        --danger-color: #dc3545;
+    }
+
+    .card-header {
+        background-color: var(--danger-color) !important;
+    }
+
+    .alert-danger {
+        border-left: 4px solid var(--danger-color);
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+
+    .action-btn {
+        transition: all 0.2s;
+        min-width: 120px;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card">
+        <div class="card-header py-3 text-white">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-trash me-2"></i>
+                تأكيد حذف المرتجع
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger">
+                <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>تحذير!</h5>
+                <p>هل أنت متأكد من أنك تريد حذف المرتجع <strong>{{ return_entry.return_number }}</strong>؟</p>
+                <p>هذا الإجراء لا يمكن التراجع عنه وسيؤدي إلى:</p>
+                <ul>
+                    <li>إزالة هذا المرتجع نهائياً من النظام</li>
+                    <li>خصم الكميات المرتجعة من المخزون</li>
+                </ul>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'sales:return-detail' pk=return_entry.pk %}" class="btn btn-secondary action-btn">
+                        <i class="fas fa-times me-1"></i> إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-danger action-btn">
+                        <i class="fas fa-trash me-1"></i> تأكيد الحذف
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

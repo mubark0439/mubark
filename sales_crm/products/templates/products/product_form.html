@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}تعديل{% else %}إضافة{% endif %} منتج{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card form-card shadow-lg">
+        <div class="card-header text-white" style="background-color: #051837;">
+            <h4 class="mb-0">
+                <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %} me-2"></i>
+                {% if form.instance.pk %}تعديل{% else %}إضافة{% endif %} منتج
+            </h4>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="product-form">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                <i class="fas fa-tag me-2"></i>اسم المنتج
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label for="{{ form.category.id_for_label }}" class="form-label">
+                                <i class="fas fa-list-alt me-2"></i>الفئة
+                            </label>
+                            {{ form.category }}
+                            {% if form.category.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.category.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group mb-4">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                <i class="fas fa-align-left me-2"></i>الوصف
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors.0 }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group mb-4">
+                            <label class="form-label">
+                                <i class="fas fa-image me-2"></i>صورة المنتج
+                            </label>
+                            <div class="image-upload-container">
+                                {% if form.instance.image %}
+                                <div class="current-image mb-3">
+                                    <img src="{{ form.instance.image.url }}" class="img-thumbnail current-image-preview">
+                                    <div class="form-check mt-2">
+                                        <input class="form-check-input" type="checkbox" name="image-clear" id="image-clear">
+                                        <label class="form-check-label" for="image-clear">
+                                            حذف الصورة الحالية
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                {{ form.image }}
+                                {% if form.image.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.image.errors.0 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-4">
+                                    <label for="{{ form.price.id_for_label }}" class="form-label">
+                                        <i class="fas fa-money-bill-wave me-2"></i>السعر (ر.س)
+                                    </label>
+                                    {{ form.price }}
+                                    {% if form.price.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.price.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-4">
+                                    <label for="{{ form.cost.id_for_label }}" class="form-label">
+                                        <i class="fas fa-money-bill me-2"></i>التكلفة (ر.س)
+                                    </label>
+                                    {{ form.cost }}
+                                    {% if form.cost.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.cost.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-4">
+                                    <label for="{{ form.quantity.id_for_label }}" class="form-label">
+                                        <i class="fas fa-cubes me-2"></i>الكمية
+                                    </label>
+                                    {{ form.quantity }}
+                                    {% if form.quantity.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.quantity.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-4">
+                                    <label for="{{ form.barcode.id_for_label }}" class="form-label">
+                                        <i class="fas fa-barcode me-2"></i>الباركود
+                                    </label>
+                                    {{ form.barcode }}
+                                    {% if form.barcode.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.barcode.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-actions mt-4">
+                    <button type="submit" class="btn btn-primary btn-save">
+                        <i class="fas fa-save me-2"></i> حفظ
+                    </button>
+                    <a href="{% if form.instance.pk %}{% url 'products:product-detail' form.instance.pk %}{% else %}{% url 'products:product-list' %}{% endif %}" 
+                       class="btn btn-outline-secondary btn-cancel">
+                        <i class="fas fa-times me-2"></i> إلغاء
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* الهوية البصرية */
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+    }
+
+    .form-card {
+        border-radius: 12px;
+        border: none;
+    }
+    
+    .form-card .card-header {
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .product-form .form-label {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .product-form .form-control, 
+    .product-form .form-select {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
+        transition: all 0.3s ease;
+    }
+    
+    .product-form .form-control:focus, 
+    .product-form .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(5, 24, 55, 0.1);
+    }
+    
+    .image-upload-container {
+        border: 1px dashed #ddd;
+        border-radius: 8px;
+        padding: 1rem;
+        background-color: #f8f9fa;
+    }
+    
+    .current-image {
+        text-align: center;
+    }
+    
+    .current-image-preview {
+        max-width: 200px;
+        max-height: 200px;
+        object-fit: contain;
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+    
+    .btn-save {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(5, 24, 55, 0.2);
+    }
+    
+    .btn-cancel {
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-cancel:hover {
+        background-color: #f8f9fa;
+    }
+    
+    @media (max-width: 768px) {
+        .form-actions {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .btn-save, .btn-cancel {
+            width: 100%;
+        }
+    }
+    
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // عرض معاينة الصورة عند اختيارها
+    const imageInput = document.querySelector('input[type="file"]');
+    if (imageInput) {
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const previewContainer = document.querySelector('.current-image');
+                    if (previewContainer) {
+                        previewContainer.innerHTML = `
+                            <img src="${event.target.result}" class="img-thumbnail current-image-preview">
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="image-clear" id="image-clear">
+                                <label class="form-check-label" for="image-clear">
+                                    حذف الصورة الحالية
+                                </label>
+                            </div>
+                        `;
+                    } else {
+                        const imageContainer = document.querySelector('.image-upload-container');
+                        imageContainer.insertAdjacentHTML('afterbegin', `
+                            <div class="current-image mb-3">
+                                <img src="${event.target.result}" class="img-thumbnail current-image-preview">
+                            </div>
+                        `);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // إضافة class is-invalid للحقول التي بها أخطاء
+    const formFields = document.querySelectorAll('.product-form .form-control, .product-form .form-select');
+    formFields.forEach(field => {
+        if (field.nextElementSibling && field.nextElementSibling.classList.contains('invalid-feedback')) {
+            field.classList.add('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}

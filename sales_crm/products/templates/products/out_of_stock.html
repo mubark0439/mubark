@@ -1,0 +1,273 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-container me-3" style="background-color: rgba(220, 53, 69, 0.1);">
+                <i class="fas fa-exclamation-triangle fa-lg" style="color: #dc3545;"></i>
+            </div>
+            <h1 class="page-title mb-0" style="color: #dc3545;">المنتجات النافذة من المخزون</h1>
+        </div>
+        <a href="{% url 'products:product-list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i> العودة للقائمة
+        </a>
+    </div>
+
+    <div class="card content-card shadow-lg">
+        <div class="card-body p-4">
+            <div class="table-responsive">
+                <table class="table product-table">
+                    <thead>
+                        <tr>
+                            <th width="5%">#</th>
+                            <th width="10%">الصورة</th>
+                            <th>اسم المنتج</th>
+                            <th>الباركود</th>
+                            <th width="12%">السعر</th>
+                            <th width="15%">آخر تحديث</th>
+                            <th width="12%">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in products %}
+                        <tr class="product-row">
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <div class="product-img-container">
+                                    {% if product.image %}
+                                        <img src="{{ product.image.url }}" class="product-img">
+                                    {% else %}
+                                        <div class="no-image">
+                                            <i class="fas fa-image"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.barcode|default:"-" }}</td>
+                            <td>{{ product.price }} ر.س</td>
+                            <td>{{ product.updated_at|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                <a href="{% url 'products:product-update' product.pk %}" 
+                                   class="btn btn-outline-primary btn-sm"
+                                   data-bs-toggle="tooltip" title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5 empty-state">
+                                <div class="empty-content">
+                                    <i class="fas fa-check-circle empty-icon" style="color: #28a745;"></i>
+                                    <p class="empty-text">لا توجد منتجات نافذة من المخزون</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-right me-1"></i> السابق
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                            التالي <i class="fas fa-chevron-left ms-1"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* الهوية البصرية */
+    :root {
+        --primary-color: #051837;
+        --danger-color: #dc3545;
+        --danger-light: rgba(220, 53, 69, 0.1);
+    }
+
+    /* العناصر العامة */
+    .icon-container {
+        width: 50px;
+        height: 50px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .page-title {
+        font-weight: 600;
+    }
+    
+    /* بطاقة المحتوى */
+    .content-card {
+        border-radius: 12px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* جدول المنتجات */
+    .product-table {
+        width: 100%;
+        margin-bottom: 0;
+    }
+    
+    .product-table thead th {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+        font-weight: 600;
+        padding: 12px 15px;
+        border-bottom: 2px solid var(--primary-color);
+        vertical-align: middle;
+    }
+    
+    .product-table tbody td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .product-row:hover {
+        background-color: rgba(5, 24, 55, 0.03);
+    }
+    
+    /* صور المنتجات */
+    .product-img-container {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .product-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+    
+    .no-image {
+        width: 100%;
+        height: 100%;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+    }
+    
+    /* حالة عدم وجود بيانات */
+    .empty-state {
+        padding: 3rem 0;
+    }
+    
+    .empty-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .empty-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-text {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+    }
+    
+    /* التكيف مع الجوال */
+    @media (max-width: 768px) {
+        .product-table thead {
+            display: none;
+        }
+        
+        .product-row {
+            display: block;
+            margin-bottom: 1.5rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        
+        .product-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f8f9fa;
+            padding: 0.75rem;
+            text-align: right;
+        }
+        
+        .product-table td:before {
+            content: attr(data-label);
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 10px;
+        }
+        
+        .product-table td:last-child {
+            border-bottom: none;
+            justify-content: center;
+            padding-top: 1rem;
+        }
+        
+        .product-img-container {
+            margin: 0 auto;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تفعيل أدوات التلميح
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // إضافة بيانات-label للعرض على الجوال
+    if (window.innerWidth <= 768) {
+        const headers = document.querySelectorAll('.product-table thead th');
+        const cells = document.querySelectorAll('.product-table tbody td');
+        
+        headers.forEach((header, index) => {
+            const label = header.textContent.trim();
+            cells.forEach(cell => {
+                if (cell.cellIndex === index) {
+                    cell.setAttribute('data-label', label);
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

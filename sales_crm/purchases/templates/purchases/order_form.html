@@ -1,0 +1,575 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}تعديل{% else %}إنشاء{% endif %} أمر شراء{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+        --primary-lighter: rgba(5, 24, 55, 0.05);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        border: 1px solid #eee;
+    }
+    
+    .form-section-header {
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-section-header i {
+        margin-left: 10px;
+        color: var(--primary-color);
+    }
+    
+    .form-section-title {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin: 0;
+    }
+    
+    .order-item {
+        background-color: #f8f9fa;
+        transition: all 0.2s;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        position: relative;
+    }
+    
+    .order-item:hover {
+        background-color: #f1f3f5;
+        border-color: #ced4da;
+    }
+    
+    .btn-add-item {
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+    }
+    
+    .btn-add-item:hover {
+        background-color: #0a2c5e;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(5, 24, 55, 0.25);
+    }
+    
+    .form-alert {
+        border-left: 4px solid #ffc107;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    #order-items-container {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 5px;
+        margin: 15px 0;
+    }
+    
+    .loading-indicator {
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+    
+    .action-buttons .btn {
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .action-buttons .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .action-buttons .btn-primary:hover {
+        background-color: #0a2c5e;
+        border-color: #0a2c5e;
+    }
+    
+    .card {
+        border-radius: 12px;
+        border: 1px solid var(--primary-light);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+        background-color: var(--primary-color) !important;
+    }
+    
+    .item-total {
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+    
+    #order-total {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--primary-color);
+    }
+    
+    .payment-method-fields {
+        transition: all 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card shadow">
+        <div class="card-header py-3 text-white">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %} me-1"></i>
+                {% if form.instance.pk %}تعديل{% else %}إنشاء{% endif %} أمر شراء
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" id="order-form">
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <i class="fas fa-info-circle"></i>
+                        <h5 class="form-section-title">المعلومات الأساسية</h5>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">المورد</label>
+                            {{ form.supplier }}
+                            {% if form.supplier.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.supplier.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">تاريخ الطلب</label>
+                            <input type="text" class="form-control" 
+                                   value="{% if form.instance.pk %}{{ form.instance.order_date|date:'Y-m-d H:i' }}{% else %}{{ now|date:'Y-m-d H:i' }}{% endif %}" 
+                                   readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">طريقة الدفع</label>
+                            {{ form.payment_method }}
+                            {% if form.payment_method.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.payment_method.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3 payment-method-fields" id="due-date-field" style="display: none;">
+                            <label class="form-label">تاريخ الاستحقاق</label>
+                            <div class="input-group">
+                                {{ form.due_date }}
+                                <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                            </div>
+                            <small class="text-muted">يجب أن يكون تاريخ الاستحقاق بعد تاريخ اليوم</small>
+                            {% if form.due_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.due_date.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3 payment-method-fields" id="transaction-ref-field" style="display: none;">
+                            <label class="form-label">رقم المرجع</label>
+                            {{ form.transaction_reference }}
+                            {% if form.transaction_reference.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.transaction_reference.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <i class="fas fa-boxes"></i>
+                        <h5 class="form-section-title">بنود الطلبية</h5>
+                    </div>
+                    
+                    <div class="alert alert-warning form-alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>ملاحظة:</strong> يمكنك إضافة عدة أصناف للطلبية
+                    </div>
+                    
+                    <div id="order-items-container">
+                        <table class="table table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th width="40%">المنتج</th>
+                                    <th width="15%">الكمية</th>
+                                    <th width="15%">سعر الشراء</th>
+                                    <th width="15%">المجموع</th>
+                                    <th width="15%">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="order-items-body">
+                                {% for form in formset %}
+                                <tr class="order-item-row" {% if form.DELETE.value %}style="display:none;"{% endif %}>
+                                    <td>
+                                        {{ form.product }}
+                                        {% if form.product.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.product.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ form.quantity }}
+                                        {% if form.quantity.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.quantity.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ form.unit_cost }}
+                                        {% if form.unit_cost.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.unit_cost.errors }}
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td class="item-total">
+                                        {% if form.quantity.value and form.unit_cost.value %}
+                                            {% widthratio form.quantity.value 1 form.unit_cost.value as total %}
+                                            {{ total|floatformat:2 }} ر.س
+                                        {% else %}0.00 ر.س{% endif %}
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm remove-item">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                    {{ form.id }}
+                                    {{ form.DELETE }}
+                                </tr>
+                                {% empty %}
+                                <tr class="order-item-row">
+                                    <td>
+                                        <select name="{{ formset.prefix }}-0-product" class="form-select product-select" id="id_{{ formset.prefix }}-0-product">
+                                            <option value="">--- اختر منتج ---</option>
+                                            {% for product in products %}
+                                            <option value="{{ product.id }}">{{ product.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td>
+                                        <input type="number" name="{{ formset.prefix }}-0-quantity" class="form-control quantity" min="1" value="1" id="id_{{ formset.prefix }}-0-quantity">
+                                    </td>
+                                    <td>
+                                        <input type="number" name="{{ formset.prefix }}-0-unit_cost" class="form-control unit-cost" step="0.01" value="0.00" id="id_{{ formset.prefix }}-0-unit_cost">
+                                    </td>
+                                    <td class="item-total">
+                                        0.00 ر.س
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-danger btn-sm remove-item">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                    <input type="hidden" name="{{ formset.prefix }}-0-id" id="id_{{ formset.prefix }}-0-id">
+                                    <input type="hidden" name="{{ formset.prefix }}-0-DELETE" id="id_{{ formset.prefix }}-0-DELETE">
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-active">
+                                    <td colspan="3" class="text-end"><strong>الإجمالي:</strong></td>
+                                    <td colspan="2" id="order-total">0.00 ر.س</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <button type="button" id="add-item" class="btn btn-add-item">
+                        <i class="fas fa-plus me-1"></i> إضافة بند جديد
+                    </button>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <i class="fas fa-sticky-note"></i>
+                        <h5 class="form-section-title">ملاحظات إضافية</h5>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.notes }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between action-buttons">
+                    <a href="{% url 'purchases:order-list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i> إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ar.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize select2 with RTL support
+    $('select').select2({
+        dir: "rtl",
+        language: "ar"
+    });
+
+    const formsetPrefix = '{{ formset.prefix }}';
+    const totalForms = document.getElementById('id_' + formsetPrefix + '-TOTAL_FORMS');
+    let formCount = parseInt(totalForms.value) || 1;
+    
+    // استخدام empty_form من Django لإنشاء بنود جديدة
+    const emptyFormHtml = `
+        <tr class="order-item-row">
+            <td>
+                <select name="${formsetPrefix}-__prefix__-product" class="form-select product-select">
+                    <option value="">--- اختر منتج ---</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}">{{ product.name }}</option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td>
+                <input type="number" name="${formsetPrefix}-__prefix__-quantity" class="form-control quantity" min="1" value="1">
+            </td>
+            <td>
+                <input type="number" name="${formsetPrefix}-__prefix__-unit_cost" class="form-control unit-cost" step="0.01" value="0.00">
+            </td>
+            <td class="item-total">
+                0.00 ر.س
+            </td>
+            <td>
+                <button type="button" class="btn btn-danger btn-sm remove-item">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+            <input type="hidden" name="${formsetPrefix}-__prefix__-id" id="id_${formsetPrefix}-__prefix__-id">
+            <input type="hidden" name="${formsetPrefix}-__prefix__-DELETE" id="id_${formsetPrefix}-__prefix__-DELETE">
+        </tr>
+    `;
+
+    // إضافة بند جديد
+    document.getElementById('add-item').addEventListener('click', function() {
+        const newRow = document.createElement('tr');
+        newRow.className = 'order-item-row';
+        newRow.innerHTML = emptyFormHtml.replace(/__prefix__/g, formCount);
+        document.getElementById('order-items-body').appendChild(newRow);
+        
+        formCount++;
+        totalForms.value = formCount;
+        
+        // إعادة تهيئة select2 للعنصر الجديد
+        $(newRow.querySelector('select')).select2({
+            dir: "rtl",
+            language: "ar"
+        });
+        
+        // ربط الأحداث للبند الجديد
+        bindRowEvents(newRow);
+        calculateTotals();
+    });
+
+    // ربط الأحداث لصف معين
+    function bindRowEvents(row) {
+        const productSelect = row.querySelector('.product-select');
+        const quantityInput = row.querySelector('.quantity');
+        const unitCostInput = row.querySelector('.unit-cost');
+        const removeBtn = row.querySelector('.remove-item');
+        
+        if (productSelect) {
+            productSelect.addEventListener('change', function() {
+                fetchProductCost(this);
+            });
+        }
+        
+        if (quantityInput) {
+            quantityInput.addEventListener('input', calculateTotals);
+        }
+        
+        if (unitCostInput) {
+            unitCostInput.addEventListener('input', calculateTotals);
+        }
+        
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                const row = this.closest('tr');
+                const deleteField = row.querySelector('input[name$="-DELETE"]');
+                if (deleteField) {
+                    deleteField.value = 'on';
+                    row.style.display = 'none';
+                }
+                calculateTotals();
+            });
+        }
+    }
+
+    // ربط الأحداث للبنود الموجودة
+    document.querySelectorAll('.order-item-row').forEach(row => {
+        if (row.style.display !== 'none') {
+            bindRowEvents(row);
+        }
+    });
+
+    // دالة لحساب المجاميع
+    function calculateTotals() {
+        let orderTotal = 0;
+        
+        document.querySelectorAll('.order-item-row:not([style*="display: none"])').forEach(row => {
+            const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+            const unitCost = parseFloat(row.querySelector('.unit-cost').value) || 0;
+            const total = quantity * unitCost;
+            
+            row.querySelector('.item-total').textContent = total.toFixed(2) + ' ر.س';
+            orderTotal += total;
+        });
+        
+        document.getElementById('order-total').textContent = orderTotal.toFixed(2) + ' ر.س';
+    }
+
+    // دالة لجلب سعر المنتج
+    function fetchProductCost(productSelect) {
+        const productId = productSelect.value;
+        const row = productSelect.closest('tr');
+        const unitCostField = row.querySelector('.unit-cost');
+        
+        if (productId) {
+            fetch(`/purchases/get-product-cost/?product_id=${productId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.cost) {
+                        unitCostField.value = data.cost;
+                        calculateTotals();
+                    }
+                })
+                .catch(error => console.error('Error fetching product cost:', error));
+        }
+    }
+
+    // دالة لإظهار/إخفاء حقول الدفع
+    function togglePaymentFields() {
+        const paymentMethod = document.getElementById('id_payment_method').value;
+        const dueDateField = document.getElementById('due-date-field');
+        const transactionRefField = document.getElementById('transaction-ref-field');
+        
+        dueDateField.style.display = 'none';
+        transactionRefField.style.display = 'none';
+        
+        if (paymentMethod === 'credit') {
+            dueDateField.style.display = 'block';
+            // تعيين تاريخ افتراضي (تاريخ اليوم + 30 يوم)
+            const today = new Date();
+            const dueDate = new Date();
+            dueDate.setDate(today.getDate() + 30);
+            
+            const dueDateInput = document.getElementById('id_due_date');
+            if (dueDateInput && !dueDateInput.value) {
+                dueDateInput.value = dueDate.toISOString().split('T')[0];
+            }
+        } else if (paymentMethod === 'transfer') {
+            transactionRefField.style.display = 'block';
+        }
+    }
+
+    // التحقق من صحة تاريخ الاستحقاق عند الإرسال
+    document.getElementById('order-form').addEventListener('submit', function(e) {
+        const paymentMethod = document.getElementById('id_payment_method').value;
+        if (paymentMethod === 'credit') {
+            const dueDateInput = document.getElementById('id_due_date');
+            if (dueDateInput) {
+                const dueDate = new Date(dueDateInput.value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                if (dueDate <= today) {
+                    e.preventDefault();
+                    alert('تاريخ الاستحقاق يجب أن يكون بعد تاريخ اليوم');
+                    dueDateInput.focus();
+                    return false;
+                }
+            }
+        }
+
+        // التحقق من وجود بنود في الطلبية
+        const visibleRows = document.querySelectorAll('.order-item-row:not([style*="display: none"])');
+        if (visibleRows.length === 0) {
+            e.preventDefault();
+            alert('يجب إضافة على الأقل بند واحد إلى الطلبية');
+            return false;
+        }
+
+        return true;
+    });
+
+    // تهيئة حقل التاريخ باستخدام flatpickr لسهولة الاختيار
+    if (document.getElementById('id_due_date')) {
+        flatpickr('#id_due_date', {
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            locale: 'ar',
+            allowInput: true
+        });
+    }
+
+    // ربط حدث تغيير طريقة الدفع
+    document.getElementById('id_payment_method').addEventListener('change', togglePaymentFields);
+    
+    // تشغيل الوظائف عند تحميل الصفحة
+    togglePaymentFields();
+    calculateTotals();
+});
+</script>
+{% endblock %}

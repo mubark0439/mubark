@@ -1,0 +1,590 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% if editing %}تعديل{% else %}إنشاء{% endif %} مرتجع شراء{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+        --primary-lighter: rgba(5, 24, 55, 0.05);
+    }
+
+    .form-section {
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        border: 1px solid #eee;
+    }
+    
+    .form-section-header {
+        padding-bottom: 0.75rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-section-header i {
+        margin-left: 10px;
+        color: var(--primary-color);
+    }
+    
+    .form-section-title {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin: 0;
+    }
+    
+    .return-item {
+        background-color: #f8f9fa;
+        transition: all 0.2s;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        position: relative;
+    }
+    
+    .return-item:hover {
+        background-color: #f1f3f5;
+        border-color: #ced4da;
+    }
+    
+    .return-item-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .return-item-title {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin: 0;
+    }
+    
+    .return-item-meta {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .btn-add-item {
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+    }
+    
+    .btn-add-item:hover {
+        background-color: #0a2c5e;
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(5, 24, 55, 0.25);
+    }
+    
+    .form-alert {
+        border-left: 4px solid #ffc107;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    #return-items-container {
+        max-height: 60vh;
+        overflow-y: auto;
+        padding: 10px;
+        border: 1px solid #eee;
+        border-radius: 5px;
+        margin: 15px 0;
+    }
+    
+    .loading-indicator {
+        text-align: center;
+        padding: 20px;
+    }
+    
+    .select2-container--default .select2-selection--single {
+        height: 38px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px;
+    }
+    
+    .action-buttons .btn {
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .action-buttons .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .action-buttons .btn-primary:hover {
+        background-color: #0a2c5e;
+        border-color: #0a2c5e;
+    }
+    
+    .card {
+        border-radius: 12px;
+        border: 1px solid var(--primary-light);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+        background-color: var(--primary-color) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card shadow">
+        <div class="card-header py-3 text-white">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-undo me-1"></i>
+                {% if editing %}تعديل{% else %}إنشاء{% endif %} مرتجع شراء
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" id="return-form">
+                {% csrf_token %}
+                
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <i class="fas fa-info-circle"></i>
+                        <h5 class="form-section-title">المعلومات الأساسية</h5>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">أمر الشراء الأصلي</label>
+                            {{ form.purchase_order }}
+                            {% if form.purchase_order.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.purchase_order.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">سبب الإرجاع الرئيسي</label>
+                            {{ form.reason }}
+                            {% if form.reason.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.reason.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4" id="order-details-container" style="display: none;">
+                    <div class="card-header bg-light">
+                        <h6 class="m-0">تفاصيل أمر الشراء المختار</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="order-details-content"></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <i class="fas fa-boxes"></i>
+                        <h5 class="form-section-title">بنود المرتجع</h5>
+                    </div>
+                    
+                    <div class="alert alert-warning form-alert">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>ملاحظة:</strong> يمكنك إضافة عدة أصناف من أمر الشراء المحدد
+                    </div>
+                    
+                    <div id="return-items-container">
+                        {% if editing %}
+                            {% for item in return_items %}
+                            <div class="return-item">
+                                <div class="return-item-header">
+                                    <h6 class="return-item-title">{{ item.order_item.product.name }}</h6>
+                                    <div class="return-item-meta">
+                                        الكمية الأصلية: {{ item.order_item.quantity }} | 
+                                        المرتجعة: {{ item.quantity }}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-2 mb-3">
+                                        <label class="form-label">الكمية</label>
+                                        <input type="number" name="quantity" class="form-control" 
+                                               min="1" max="{{ item.order_item.quantity }}" 
+                                               value="{{ item.quantity }}" required>
+                                    </div>
+                                    <div class="col-md-10 mb-3">
+                                        <label class="form-label">سبب الإرجاع</label>
+                                        <textarea name="item_reason" class="form-control" 
+                                                  rows="2" required>{{ item.reason }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+
+                    <button type="button" class="btn btn-add-item mt-2" id="add-item">
+                        <i class="fas fa-plus me-1"></i> إضافة بند
+                    </button>
+                </div>
+
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <i class="fas fa-sticky-note"></i>
+                        <h5 class="form-section-title">ملاحظات إضافية</h5>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.notes }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between action-buttons">
+                    <a href="{% if editing %}{% url 'purchases:return-detail' pk=return_entry.pk %}{% else %}{% url 'purchases:return-list' %}{% endif %}" 
+                       class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i> إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i> حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize select2 with RTL support
+    $('select').select2({
+        dir: "rtl",
+        language: "ar"
+    });
+
+    const orderSelect = document.getElementById('id_purchase_order');
+    const itemsContainer = document.getElementById('return-items-container');
+    const addItemBtn = document.getElementById('add-item');
+    const orderDetailsContainer = document.getElementById('order-details-container');
+    const orderDetailsContent = document.getElementById('order-details-content');
+    
+    // عند تغيير أمر الشراء
+    if (orderSelect) {
+        orderSelect.addEventListener('change', function() {
+            const orderId = this.value;
+            if (!orderId) {
+                orderDetailsContainer.style.display = 'none';
+                itemsContainer.innerHTML = '';
+                return;
+            }
+            
+            // إظهار حالة التحميل
+            itemsContainer.innerHTML = '<div class="loading-indicator"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الأصناف...</div>';
+            
+            // جلب تفاصيل أمر الشراء
+            fetch(`/purchases/order-details-json/${orderId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    // عرض تفاصيل أمر الشراء
+                    let detailsHtml = `
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>رقم الأمر:</strong> ${data.order_number}</p>
+                                <p><strong>التاريخ:</strong> ${data.order_date}</p>
+                                <p><strong>المورد:</strong> ${data.supplier_name}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>طريقة الدفع:</strong> ${data.payment_method_display}</p>
+                                <p><strong>المبلغ الإجمالي:</strong> ${data.total} ر.س</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <h6>بنود أمر الشراء</h6>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>المنتج</th>
+                                        <th>الكمية</th>
+                                        <th>سعر الشراء</th>
+                                        <th>المجموع</th>
+                                        <th>الكمية المرتجعة سابقاً</th>
+                                        <th>المتبقي للإرجاع</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+                    
+                    data.items.forEach(item => {
+                        detailsHtml += `
+                            <tr>
+                                <td>${item.product_name}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.unit_cost} ر.س</td>
+                                <td>${item.total_cost} ر.س</td>
+                                <td>${item.returned_quantity || 0}</td>
+                                <td>${item.max_returnable}</td>
+                            </tr>`;
+                    });
+                    
+                    detailsHtml += `</tbody></table></div>`;
+                    
+                    orderDetailsContent.innerHTML = detailsHtml;
+                    orderDetailsContainer.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Error loading order details:', error);
+                });
+            
+            // جلب العناصر للإرجاع
+            fetch(`{% url 'purchases:get-order-items' %}?order_id=${orderId}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    itemsContainer.innerHTML = '';
+                    
+                    if (data.length === 0) {
+                        itemsContainer.innerHTML = '<div class="alert alert-info text-center">لا توجد أصناف متاحة للإرجاع</div>';
+                        return;
+                    }
+                    
+                    data.forEach(item => {
+                        if (item.max_returnable > 0) {
+                            const itemHTML = `
+                                <div class="return-item">
+                                    <div class="return-item-header">
+                                        <h6 class="return-item-title">${item.product_name}</h6>
+                                        <div class="return-item-meta">
+                                            الكمية الأصلية: ${item.quantity} | 
+                                            مرجع سابقاً: ${item.returned_quantity || 0}
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-2 mb-3">
+                                            <label class="form-label">الكمية</label>
+                                            <input type="number" name="quantity" 
+                                                   class="form-control" 
+                                                   min="1" 
+                                                   max="${item.max_returnable}" 
+                                                   value="1" required>
+                                            <small class="text-muted">الحد الأقصى: ${item.max_returnable}</small>
+                                        </div>
+                                        <div class="col-md-10 mb-3">
+                                            <label class="form-label">سبب الإرجاع</label>
+                                            <textarea name="item_reason" 
+                                                      class="form-control" 
+                                                      rows="2" 
+                                                      required 
+                                                      placeholder="سبب الإرجاع"></textarea>
+                                        </div>
+                                    </div>
+                                </div>`;
+                            
+                            itemsContainer.insertAdjacentHTML('beforeend', itemHTML);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading order items:', error);
+                    itemsContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            حدث خطأ أثناء جلب الأصناف: ${error.message}
+                        </div>`;
+                });
+        });
+        
+        // تحميل البيانات الأولية عند التعديل
+        {% if editing %}
+            const orderId = orderSelect.value;
+            if (orderId) {
+                fetch(`/purchases/order-details-json/${orderId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        let detailsHtml = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>رقم الأمر:</strong> ${data.order_number}</p>
+                                    <p><strong>التاريخ:</strong> ${data.order_date}</p>
+                                    <p><strong>المورد:</strong> ${data.supplier_name}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>طريقة الدفع:</strong> ${data.payment_method_display}</p>
+                                    <p><strong>المبلغ الإجمالي:</strong> ${data.total} ر.س</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <h6>بنود أمر الشراء</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>المنتج</th>
+                                            <th>الكمية</th>
+                                            <th>سعر الشراء</th>
+                                            <th>المجموع</th>
+                                            <th>الكمية المرتجعة سابقاً</th>
+                                            <th>المتبقي للإرجاع</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                        
+                        data.items.forEach(item => {
+                            detailsHtml += `
+                                <tr>
+                                    <td>${item.product_name}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>${item.unit_cost} ر.س</td>
+                                    <td>${item.total_cost} ر.س</td>
+                                    <td>${item.returned_quantity || 0}</td>
+                                    <td>${item.max_returnable}</td>
+                                </tr>`;
+                        });
+                        
+                        detailsHtml += `</tbody></table></div>`;
+                        
+                        orderDetailsContent.innerHTML = detailsHtml;
+                        orderDetailsContainer.style.display = 'block';
+                    });
+            }
+        {% endif %}
+    }
+    
+    // إضافة بند جديد
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', function() {
+            const orderId = orderSelect.value;
+            if (!orderId) {
+                alert('يجب اختيار أمر شراء أولاً');
+                return;
+            }
+            
+            // جلب العناصر للإرجاع
+            fetch(`{% url 'purchases:get-order-items' %}?order_id=${orderId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const availableItems = data.filter(item => item.max_returnable > 0);
+                    
+                    if (availableItems.length === 0) {
+                        alert('لا توجد أصناف متاحة للإرجاع في هذا الأمر');
+                        return;
+                    }
+                    
+                    // إنشاء صف جديد
+                    const itemHTML = `
+                        <div class="return-item">
+                            <div class="row">
+                                <div class="col-md-5 mb-3">
+                                    <label class="form-label">الصنف</label>
+                                    <select name="order_item" class="form-select" required>
+                                        <option value="" selected disabled>اختر صنفاً</option>
+                                        ${availableItems.map(item => `
+                                            <option value="${item.id}" data-max="${item.max_returnable}">
+                                                ${item.product_name} (المتبقي: ${item.max_returnable})
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">الكمية</label>
+                                    <input type="number" name="quantity" class="form-control" 
+                                           min="1" max="${availableItems[0].max_returnable}" 
+                                           value="1" required>
+                                </div>
+                                <div class="col-md-5 mb-3">
+                                    <label class="form-label">سبب الإرجاع</label>
+                                    <textarea name="item_reason" class="form-control" 
+                                              rows="2" required placeholder="سبب الإرجاع"></textarea>
+                                </div>
+                            </div>
+                        </div>`;
+                    
+                    itemsContainer.insertAdjacentHTML('beforeend', itemHTML);
+                    
+                    // تحديث الحد الأقصى للكمية عند تغيير الصنف
+                    const select = itemsContainer.lastElementChild.querySelector('select[name="order_item"]');
+                    const qtyInput = itemsContainer.lastElementChild.querySelector('input[name="quantity"]');
+                    
+                    select.addEventListener('change', function() {
+                        const selectedOption = this.options[this.selectedIndex];
+                        const maxQty = selectedOption.dataset.max;
+                        qtyInput.max = maxQty;
+                        if (parseInt(qtyInput.value) > maxQty) {
+                            qtyInput.value = maxQty;
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ أثناء جلب الأصناف');
+                });
+        });
+    }
+    
+    // التحقق من النموذج قبل الإرسال
+    const returnForm = document.getElementById('return-form');
+    if (returnForm) {
+        returnForm.addEventListener('submit', function(e) {
+            const items = itemsContainer.querySelectorAll('.return-item');
+            if (items.length === 0) {
+                e.preventDefault();
+                alert('يجب إضافة بند واحد على الأقل للمرتجع');
+                return false;
+            }
+            
+            // التحقق من أن جميع الكميات صالحة
+            let valid = true;
+            items.forEach(item => {
+                const qtyInput = item.querySelector('input[name="quantity"]');
+                const maxQty = parseInt(qtyInput.max);
+                const enteredQty = parseInt(qtyInput.value);
+                
+                if (enteredQty < 1 || enteredQty > maxQty) {
+                    valid = false;
+                    qtyInput.classList.add('is-invalid');
+                } else {
+                    qtyInput.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!valid) {
+                e.preventDefault();
+                alert('يجب أن تكون الكمية المدخلة بين 1 والحد الأقصى المتاح للإرجاع');
+                return false;
+            }
+            
+            return true;
+        });
+    }
+});
+</script>
+{% endblock %}

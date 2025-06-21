@@ -1,0 +1,94 @@
+{% load static %}
+<header class="fixed-top" style="background-color: #051837; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+
+</header>
+
+<style>
+    /* تنسيقات خاصة بالجوال فقط - محفوظة كما هي */
+    @media (max-width: 767.98px) {
+        .dropdown-submenu {
+            position: relative;
+        }
+        
+        .dropdown-submenu .dropdown-submenu-content {
+            display: none;
+            position: static;
+            margin: 0;
+            border: none;
+            box-shadow: none;
+            background-color: rgba(0, 0, 0, 0.05);
+            padding-right: 15px;
+        }
+        
+        .dropdown-submenu .dropdown-submenu-content.show {
+            display: block;
+        }
+        
+        .dropdown-submenu .dropdown-arrow {
+            transition: transform 0.2s;
+        }
+        
+        .dropdown-submenu .dropdown-arrow.rotated {
+            transform: rotate(180deg);
+        }
+        
+        .dropdown-submenu-toggle::after {
+            display: none;
+        }
+    }
+
+    /* تحسينات عامة للهيدر */
+    .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f8f9fa !important;
+        color: #051837 !important;
+    }
+    
+    .dropdown-menu {
+        margin-top: 5px !important;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تفعيل القوائم الفرعية على الجوال
+        const submenuToggles = document.querySelectorAll('.dropdown-submenu-toggle');
+        
+        submenuToggles.forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const submenu = this.closest('.dropdown-submenu');
+                const content = submenu.querySelector('.dropdown-submenu-content');
+                const arrow = submenu.querySelector('.dropdown-arrow');
+                
+                content.classList.toggle('show');
+                arrow.classList.toggle('rotated');
+                
+                // إغلاق القوائم الفرعية الأخرى
+                document.querySelectorAll('.dropdown-submenu-content').forEach(otherContent => {
+                    if (otherContent !== content) {
+                        otherContent.classList.remove('show');
+                    }
+                });
+                
+                document.querySelectorAll('.dropdown-arrow').forEach(otherArrow => {
+                    if (otherArrow !== arrow) {
+                        otherArrow.classList.remove('rotated');
+                    }
+                });
+            });
+        });
+        
+        // منع إغلاق القائمة عند النقر داخل القائمة الفرعية
+        document.querySelectorAll('.dropdown-submenu-content').forEach(content => {
+            content.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+    });
+</script>

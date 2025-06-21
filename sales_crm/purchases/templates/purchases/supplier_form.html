@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}{% if form.instance.pk %}تعديل{% else %}إضافة{% endif %} مورد{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card content-card shadow-lg">
+        <div class="card-header py-3 text-white" style="background-color: #051837;">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus{% endif %} me-1"></i>
+                {% if form.instance.pk %}تعديل{% else %}إضافة{% endif %} مورد
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">اسم المورد</label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">جهة الاتصال</label>
+                            {{ form.contact }}
+                            {% if form.contact.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.contact.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">الهاتف</label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.phone.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="form-label">البريد الإلكتروني</label>
+                            {{ form.email }}
+                            {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.email.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">العنوان</label>
+                            {{ form.address }}
+                            {% if form.address.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.address.errors|join:", " }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary main-action-btn">
+                        <span class="icon-circle me-2">
+                            <i class="fas fa-save"></i>
+                        </span>
+                        حفظ
+                    </button>
+                    <a href="{% url 'purchases:supplier-list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i> إلغاء
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* أنماط مشتركة مع الملفات الأخرى */
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+    }
+
+    .content-card {
+        border-radius: 12px;
+        border: 1px solid var(--primary-light);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .main-action-btn {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .icon-circle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        transition: all 0.3s ease;
+    }
+    
+    .main-action-btn:hover {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(5, 24, 55, 0.25);
+    }
+    
+    .main-action-btn:hover .icon-circle {
+        background-color: rgba(255, 255, 255, 0.3);
+        transform: rotate(90deg);
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ced4da;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(5, 24, 55, 0.25);
+    }
+
+    .invalid-feedback {
+        color: #dc3545;
+        font-size: 0.875em;
+    }
+
+    @media (max-width: 768px) {
+        .row > div {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}

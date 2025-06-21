@@ -1,0 +1,494 @@
+{% extends "sales/base_sales.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+        --primary-lighter: rgba(5, 24, 55, 0.05);
+    }
+
+    .content-card {
+        border-radius: 12px;
+        border: 1px solid var(--primary-light);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+        background-color: var(--primary-color) !important;
+    }
+
+    .info-card {
+        border: 1px solid #eee;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-card-header {
+        background-color: #f8f9fa;
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid #eee;
+        border-radius: 8px 8px 0 0;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .info-card-body {
+        padding: 1.25rem;
+    }
+
+    .product-table {
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .product-table thead th {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+        font-weight: 600;
+        padding: 12px 15px;
+        border-bottom: 2px solid var(--primary-color);
+        vertical-align: middle;
+    }
+    
+    .product-table tbody td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #eee;
+    }
+
+    .badge {
+        padding: 0.5em 0.8em;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 500;
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .table-responsive {
+            border: 0;
+        }
+        
+        .table thead {
+            display: none;
+        }
+        
+        .table tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        
+        .table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f8f9fa;
+            padding: 0.75rem;
+            text-align: right;
+        }
+        
+        .table td:before {
+            content: attr(data-label);
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 10px;
+        }
+        
+        .table td:last-child {
+            border-bottom: none;
+        }
+    }
+
+    /* أنماط الطباعة */
+    @media print {
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12pt;
+            background: transparent;
+        }
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+        .container-fluid {
+            padding: 0;
+        }
+        .card {
+            border: none;
+            box-shadow: none;
+            margin: 0;
+        }
+        .card-header, .btn {
+            display: none;
+        }
+        #invoiceContent {
+            padding: 0;
+        }
+        .info-card {
+            border: none;
+            margin-bottom: 10mm;
+        }
+        .info-card-header {
+            background-color: transparent !important;
+            color: #000 !important;
+            border-bottom: 2px solid #000;
+            padding: 3mm 0;
+            margin-bottom: 3mm;
+        }
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .product-table th, .product-table td {
+            padding: 6px;
+            border: 1px solid #ddd;
+        }
+        .product-table thead th {
+            background-color: #f5f5f5 !important;
+            color: #000 !important;
+        }
+        .badge {
+            color: #000 !important;
+            background-color: transparent !important;
+            border: 1px solid #000;
+        }
+        .alert-light {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card content-card shadow-lg">
+        <div class="card-header py-3 text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    <h6 class="m-0 font-weight-bold">فاتورة #{{ sale.invoice_number }}</h6>
+                </div>
+                <div>
+                    <a href="{% url 'sales:return-create' %}?sale={{ sale.pk }}" class="btn btn-sm btn-warning me-2">
+                        <i class="fas fa-undo me-1"></i> إنشاء مرتجع
+                    </a>
+                    <button onclick="printInvoice()" class="btn btn-sm btn-light">
+                        <i class="fas fa-print me-1"></i> طباعة
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body" id="invoiceContent">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h5 class="info-card-header">معلومات العميل</h5>
+                        <div class="info-card-body">
+                            <p><strong>الاسم:</strong> {{ sale.customer_name|default:"-" }}</p>
+                            <p><strong>الهاتف:</strong> {{ sale.customer_phone|default:"-" }}</p>
+                            <p><strong>العنوان:</strong> {{ sale.customer_address|default:"-" }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h5 class="info-card-header">معلومات الفاتورة</h5>
+                        <div class="info-card-body">
+                            <p><strong>رقم الفاتورة:</strong> {{ sale.invoice_number }}</p>
+                            <p><strong>التاريخ:</strong> {{ sale.sale_date|date:"Y-m-d" }}</p>
+                            <p><strong>طريقة الدفع:</strong> {{ sale.get_payment_method_display }}</p>
+                            <p><strong>الحالة:</strong> 
+                                <span class="badge 
+                                    {% if sale.is_paid %}bg-success
+                                    {% elif sale.is_cancelled %}bg-danger
+                                    {% else %}bg-warning text-dark{% endif %}">
+                                    {% if sale.is_paid %}تم الدفع
+                                    {% elif sale.is_cancelled %}ملغاة
+                                    {% else %}قيد الانتظار{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card mb-4">
+                <h5 class="info-card-header">بنود الفاتورة</h5>
+                <div class="info-card-body">
+                    <div class="table-responsive">
+                        <table class="table product-table">
+                            <thead>
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th width="45%">المنتج</th>
+                                    <th width="15%">الكمية</th>
+                                    <th width="15%">سعر الوحدة</th>
+                                    <th width="20%">المجموع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in sale.items.all %}
+                                <tr>
+                                    <td data-label="#">{{ forloop.counter }}</td>
+                                    <td data-label="المنتج">{{ item.product.name }}</td>
+                                    <td data-label="الكمية">{{ item.quantity }}</td>
+                                    <td data-label="سعر الوحدة">{{ item.unit_price }} ر.س</td>
+                                    <td data-label="المجموع">{{ item.total_price }} ر.س</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <th colspan="4" class="text-end">المجموع:</th>
+                                    <th>{{ sale.get_subtotal }} ر.س</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="4" class="text-end">الخصم:</th>
+                                    <th>{{ sale.discount }} ر.س</th>
+                                </tr>
+                                {% if sale.tax_amount %}
+                                <tr>
+                                    <th colspan="4" class="text-end">الضريبة (15%):</th>
+                                    <th>{{ sale.tax_amount }} ر.س</th>
+                                </tr>
+                                {% endif %}
+                                <tr class="table-active">
+                                    <th colspan="4" class="text-end">الإجمالي:</th>
+                                    <th>{{ sale.total_amount }} ر.س</th>
+                                </tr>
+                                {% if sale.get_total_returned > 0 %}
+                                <tr class="table-warning">
+                                    <th colspan="4" class="text-end">إجمالي المرتجعات:</th>
+                                    <th>{{ sale.get_total_returned }} ر.س</th>
+                                </tr>
+                                <tr class="table-success">
+                                    <th colspan="4" class="text-end">الصافي بعد المرتجعات:</th>
+                                    <th>{{ sale.get_net_amount }} ر.س</th>
+                                </tr>
+                                {% endif %}
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if sale.notes %}
+            <div class="info-card">
+                <h5 class="info-card-header">ملاحظات</h5>
+                <div class="info-card-body">
+                    <div class="alert alert-light">
+                        {{ sale.notes }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- قسم المرتجعات -->
+            <div class="info-card">
+                <h5 class="info-card-header">
+                    <i class="fas fa-undo me-1"></i>
+                    المرتجعات
+                </h5>
+                <div class="info-card-body">
+                    {% if sale.returns.all %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead>
+                                <tr>
+                                    <th>رقم المرتجع</th>
+                                    <th>التاريخ</th>
+                                    <th>المبلغ</th>
+                                    <th>الحالة</th>
+                                    <th class="no-print">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for return in sale.returns.all %}
+                                <tr>
+                                    <td data-label="رقم المرتجع">{{ return.return_number }}</td>
+                                    <td data-label="التاريخ">{{ return.return_date|date:"Y-m-d" }}</td>
+                                    <td data-label="المبلغ">{{ return.total_amount }} ر.س</td>
+                                    <td data-label="الحالة">
+                                        <span class="badge 
+                                            {% if return.status == 'completed' %}bg-success
+                                            {% elif return.status == 'approved' %}bg-info
+                                            {% elif return.status == 'rejected' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ return.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="no-print" data-label="الإجراءات">
+                                        <a href="{% url 'sales:return-detail' pk=return.pk %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> عرض
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info mb-0">
+                        لا توجد مرتجعات مسجلة لهذه الفاتورة
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // إضافة بيانات-label للعرض على الجوال
+    if (window.innerWidth <= 768) {
+        const headers = document.querySelectorAll('thead th');
+        const cells = document.querySelectorAll('tbody td');
+        
+        headers.forEach((header, index) => {
+            const label = header.textContent.trim();
+            cells.forEach(cell => {
+                if (cell.cellIndex === index) {
+                    cell.setAttribute('data-label', label);
+                }
+            });
+        });
+    }
+});
+
+function printInvoice() {
+    const printWindow = window.open('', '_blank');
+    const invoiceContent = document.getElementById('invoiceContent').innerHTML;
+    
+    // إنشاء نسخة من المحتوى لإزالة عمود الإجراءات
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = invoiceContent;
+    
+    // إزالة عمود الإجراءات من جدول المرتجعات
+    const returnsTable = tempDiv.querySelector('.info-card:last-child table');
+    if (returnsTable) {
+        const rows = returnsTable.querySelectorAll('tr');
+        rows.forEach(row => {
+            const actionCell = row.querySelector('td:last-child, th:last-child');
+            if (actionCell && actionCell.classList.contains('no-print')) {
+                actionCell.remove();
+            }
+        });
+    }
+    
+    const companyInfo = `
+        <div style="
+            position: relative;
+            min-height: 100vh;
+            padding: 15mm;
+        ">
+            <!-- الخلفية الشفافة للشعار -->
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                opacity: 0.1;
+                z-index: -1;
+            ">
+                <img src="/static/images/default-product1.png" alt="شعار المتجر" style="height: 400px;">
+            </div>
+            
+            <!-- محتوى الفاتورة -->
+            <div style="position: relative; z-index: 1;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="font-weight: bold; margin-bottom: 5px;">شركة المثال للتجارة</h2>
+                    <p style="margin: 3px 0;">الرقم الضريبي: 1234567890</p>
+                    <p style="margin: 3px 0;">العنوان: الرياض - شارع الملك فهد - مركز التجارة</p>
+                    <p style="margin: 3px 0;">هاتف: 0112345678 | البريد الإلكتروني: info@example.com</p>
+                    <hr style="margin: 15px 0;">
+                    <h3 style="font-weight: bold; margin-bottom: 5px;">فاتورة ضريبية</h3>
+                    <p style="margin: 3px 0;">رقم الفاتورة: {{ sale.invoice_number }} | التاريخ: {{ sale.sale_date|date:"Y-m-d" }}</p>
+                </div>
+                
+                ${tempDiv.innerHTML}
+
+                <div style="text-align: center; margin-top: 20px; font-size: 10pt; color: #666;">
+                    <p style="margin: 3px 0;">شكراً لثقتكم بنا - نرحب باستفساراتكم على الهاتف: 0112345678</p>
+                    <p style="margin: 3px 0;">هذه الفاتورة صادرة من نظام إلكتروني ولا تحتاج إلى ختم</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html dir="rtl">
+        <head>
+            <title>فاتورة #{{ sale.invoice_number }}</title>
+            <meta charset="UTF-8">
+            <style>
+                body { 
+                    font-family: Arial; 
+                    margin: 0;
+                    background: transparent;
+                }
+                table { 
+                    width: 100%; 
+                    border-collapse: collapse; 
+                }
+                th, td { 
+                    padding: 6px; 
+                    border: 1px solid #ddd; 
+                }
+                .text-end { 
+                    text-align: left; 
+                }
+                .table-active { 
+                    font-weight: bold; 
+                }
+                .no-print {
+                    display: none !important;
+                }
+                @page {
+                    size: A4;
+                    margin: 15mm;
+                }
+            </style>
+        </head>
+        <body>
+            ${companyInfo}
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                        window.close();
+                    }, 200);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+}
+</script>
+{% endblock %}

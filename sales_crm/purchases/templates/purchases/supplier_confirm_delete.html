@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}حذف مرتجع شراء - {{ return_entry.return_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card content-card shadow-lg">
+        <div class="card-header py-3 text-white bg-danger">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-trash me-1"></i>
+                تأكيد حذف مرتجع شراء
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i> تحذير!</h5>
+                <p class="mb-0">أنت على وشك حذف مرتجع الشراء <strong>{{ return_entry.return_number }}</strong> بشكل دائم. هل أنت متأكد من ذلك؟</p>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">تفاصيل المرتجع</div>
+                <div class="card-body">
+                    <p><strong>رقم المرتجع:</strong> {{ return_entry.return_number }}</p>
+                    <p><strong>أمر الشراء:</strong> {{ return_entry.purchase_order }}</p>
+                    <p><strong>التاريخ:</strong> {{ return_entry.return_date|date:"Y-m-d" }}</p>
+                    <p><strong>المبلغ الإجمالي:</strong> {{ return_entry.total_amount }} ر.س</p>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'purchases:return-detail' pk=return_entry.pk %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-times me-2"></i> إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-2"></i> تأكيد الحذف
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* أنماط مشتركة مع الملفات الأخرى */
+    .content-card {
+        border-radius: 12px;
+        border: 1px solid rgba(5, 24, 55, 0.1);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .alert-warning {
+        border-left: 4px solid #ffc107;
+        border-radius: 8px;
+    }
+
+    .btn-outline-secondary {
+        border-radius: 8px;
+    }
+
+    .btn-danger {
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #dc3545; border-radius: 12px 12px 0 0 !important;">
+            <h4 class="m-0 text-white">
+                <i class="fas fa-trash-alt me-2"></i>حذف الموظف
+            </h4>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger d-flex align-items-center">
+                <i class="fas fa-exclamation-triangle me-3 fa-2x"></i>
+                <div>
+                    <h5 class="alert-heading mb-2">تحذير!</h5>
+                    <p class="mb-0">أنت على وشك حذف الموظف بشكل دائم. هذا الإجراء لا يمكن التراجع عنه.</p>
+                </div>
+            </div>
+            
+            <div class="d-flex align-items-center mb-4 p-4 bg-light rounded">
+                <div class="symbol symbol-60px me-4">
+                    <div class="symbol-label bg-light-danger">
+                        <i class="fas fa-user-alt fa-2x text-danger"></i>
+                    </div>
+                </div>
+                <div>
+                    <h5 class="mb-1" style="color: #051837;">{{ object.username }}</h5>
+                    <div class="text-muted">
+                        <span class="badge bg-primary me-2">{{ object.get_role_display }}</span>
+                        <span>{{ object.email }}</span>
+                    </div>
+                    <div class="mt-2">
+                        <i class="fas fa-phone me-1"></i> {{ object.phone|default:"-" }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-top pt-4">
+                <h5 class="mb-3" style="color: #051837;">تأكيد الحذف</h5>
+                <p class="mb-4">يرجى كتابة <strong>"تأكيد الحذف"</strong> في المربع أدناه لمتابعة عملية الحذف.</p>
+                
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <input type="text" class="form-control" name="confirmation" 
+                               placeholder="اكتب 'تأكيد الحذف' هنا" required 
+                               style="max-width: 300px;">
+                        <div class="invalid-feedback">
+                            يرجى كتابة "تأكيد الحذف" للمواصلة
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-danger me-3 px-4 py-2">
+                            <i class="fas fa-trash-alt me-2"></i>نعم، احذف الموظف
+                        </button>
+                        <a href="{% url 'core:employee-list' %}" class="btn btn-secondary px-4 py-2">
+                            <i class="fas fa-times me-2"></i>إلغاء
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تفعيل التحقق من النماذج
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                const confirmationInput = form.querySelector('input[name="confirmation"]');
+                if (confirmationInput.value !== 'تأكيد الحذف') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    confirmationInput.classList.add('is-invalid');
+                } else {
+                    confirmationInput.classList.remove('is-invalid');
+                }
+                
+                form.classList.add('was-validated');
+            }, false);
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,425 @@
+{% extends 'base.html' %}
+
+{% block title %}إدارة العملاء{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- العنوان وأزرار الإجراءات -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="icon-container">
+                        <i class="fas fa-users fa-lg"></i>
+                    </div>
+                    <h1 class="page-title">إدارة العملاء</h1>
+                </div>
+                <a href="{% url 'core:customer-create' %}" class="btn btn-primary add-btn">
+                    <i class="fas fa-plus me-1"></i> عميل جديد
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- بطاقة المحتوى -->
+    <div class="card content-card">
+        <div class="card-body p-4">
+            <!-- شريط البحث -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <form method="get" class="search-form">
+                        <div class="input-group search-group">
+                            <input type="text" name="q" class="form-control search-input" 
+                                   placeholder="ابحث عن عميل بالاسم أو الهاتف..." 
+                                   value="{{ request.GET.q }}"
+                                   aria-label="بحث عن عملاء">
+                            <button class="btn btn-outline-secondary search-btn" type="submit">
+                                <i class="fas fa-search"></i>
+                                <span class="search-text">بحث</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- جدول العملاء -->
+            <div class="table-responsive">
+                <table class="table customer-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>الاسم</th>
+                            <th>الهاتف</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>تاريخ الإضافة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for customer in customers %}
+                        <tr class="customer-row">
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ customer.name }}</td>
+                            <td>{{ customer.phone }}</td>
+                            <td>{{ customer.email|default:"-" }}</td>
+                            <td>{{ customer.created_at|date:"Y-m-d" }}</td>
+                            <td>
+                                <div class="btn-group action-btns">
+                                    <a href="{% url 'core:customer-detail' customer.id %}" 
+                                       class="btn btn-outline-info view-btn" 
+                                       title="عرض"
+                                       data-bs-toggle="tooltip">
+                                        <i class="fas fa-eye"></i>
+                                        <span class="btn-text">عرض</span>
+                                    </a>
+                                    <a href="{% url 'core:customer-update' customer.id %}" 
+                                       class="btn btn-outline-warning edit-btn" 
+                                       title="تعديل"
+                                       data-bs-toggle="tooltip">
+                                        <i class="fas fa-edit"></i>
+                                        <span class="btn-text">تعديل</span>
+                                    </a>
+                                    <a href="{% url 'core:customer-delete' customer.id %}" 
+                                       class="btn btn-outline-danger delete-btn" 
+                                       title="حذف"
+                                       data-bs-toggle="tooltip"
+                                       data-confirm="هل أنت متأكد من رغبتك في حذف العميل '{{ customer.name }}'؟">
+                                        <i class="fas fa-trash"></i>
+                                        <span class="btn-text">حذف</span>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <div class="empty-content">
+                                    <i class="fas fa-user-slash empty-icon"></i>
+                                    <p class="empty-text">لا يوجد عملاء مسجلين</p>
+                                    <a href="{% url 'core:customer-create' %}" class="btn btn-primary empty-btn">
+                                        إضافة عميل جديد
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- الترقيم الصفحي -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link pagination-prev" 
+                           href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                            <i class="fas fa-chevron-right me-1"></i> السابق
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link pagination-active">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link pagination-link" 
+                           href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link pagination-next" 
+                           href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}">
+                            التالي <i class="fas fa-chevron-left ms-1"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* تحسينات عامة */
+    .icon-container {
+        width: 50px; 
+        height: 50px; 
+        background-color: rgba(5, 24, 55, 0.1); 
+        border-radius: 8px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        margin-left: 15px;
+    }
+    
+    .icon-container i {
+        color: #051837;
+    }
+    
+    .page-title {
+        color: #051837;
+        margin-bottom: 0;
+    }
+    
+    .add-btn {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .add-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .content-card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .content-card:hover {
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* تحسينات شريط البحث */
+    .search-group {
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .search-input {
+        border-radius: 8px 0 0 8px;
+        border-right: none;
+        transition: border-color 0.3s ease;
+    }
+    
+    .search-input:focus {
+        border-color: #051837;
+        box-shadow: none;
+    }
+    
+    .search-btn {
+        border-radius: 0 8px 8px 0;
+        border-left: none;
+        transition: all 0.3s ease;
+    }
+    
+    .search-btn:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .search-text {
+        margin-right: 5px;
+    }
+    
+    /* تحسينات الجدول */
+    .customer-table {
+        width: 100%;
+        margin-bottom: 0;
+    }
+    
+    .customer-table thead th {
+        color: #051837;
+        border-bottom: 2px solid #051837;
+        font-weight: 600;
+        padding: 12px 15px;
+    }
+    
+    .customer-table tbody td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .customer-row:hover {
+        background-color: rgba(5, 24, 55, 0.03);
+    }
+    
+    /* تحسينات أزرار الإجراءات */
+    .action-btns {
+        display: flex;
+    }
+    
+    .action-btns .btn {
+        border-radius: 0;
+        padding: 0.25rem 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .action-btns .view-btn {
+        border-radius: 6px 0 0 6px;
+    }
+    
+    .action-btns .delete-btn {
+        border-radius: 0 6px 6px 0;
+    }
+    
+    .action-btns .btn:hover {
+        transform: translateY(-1px);
+    }
+    
+    .btn-text {
+        display: none;
+    }
+    
+    /* تحسينات حالة عدم وجود بيانات */
+    .empty-state {
+        padding: 3rem 0;
+    }
+    
+    .empty-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .empty-icon {
+        font-size: 2rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-text {
+        color: #6c757d;
+        margin-bottom: 1.5rem;
+    }
+    
+    .empty-btn {
+        border-radius: 8px;
+    }
+    
+    /* تحسينات الترقيم الصفحي */
+    .pagination {
+        margin-top: 2rem;
+    }
+    
+    .page-link {
+        color: #051837;
+        border-radius: 8px;
+        margin: 0 3px;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+    
+    .pagination-prev, .pagination-next {
+        display: flex;
+        align-items: center;
+    }
+    
+    .pagination-active {
+        background-color: #051837;
+        border-color: #051837;
+    }
+    
+    .page-link:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .pagination-active:hover {
+        background-color: #051837;
+        border-color: #051837;
+    }
+    
+    /* تحسينات للجوال */
+    @media (max-width: 768px) {
+        .table-responsive {
+            border: none;
+        }
+        
+        .customer-table thead {
+            display: none;
+        }
+        
+        .customer-row {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        
+        .customer-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f8f9fa;
+            padding: 0.75rem;
+        }
+        
+        .customer-table td:before {
+            content: attr(data-label);
+            font-weight: bold;
+            color: #051837;
+            margin-left: 10px;
+        }
+        
+        .customer-table td:last-child {
+            border-bottom: none;
+            justify-content: center;
+        }
+        
+        .btn-text {
+            display: inline;
+            margin-right: 5px;
+        }
+        
+        .action-btns {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .search-text {
+            display: none;
+        }
+        
+        .page-title {
+            font-size: 1.5rem;
+        }
+        
+        .add-btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تفعيل أدوات التلميح
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // تأكيد الحذف
+    var deleteButtons = document.querySelectorAll('.delete-btn');
+    deleteButtons.forEach(function(button) {
+        button.addEventListener('click', function(e) {
+            var confirmMessage = button.getAttribute('data-confirm');
+            if (!confirm(confirmMessage)) {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // تأثيرات عند التحميل
+    setTimeout(function() {
+        document.querySelector('.content-card').style.opacity = '1';
+        document.querySelector('.content-card').style.transform = 'translateY(0)';
+    }, 50);
+});
+</script>
+{% endblock %}

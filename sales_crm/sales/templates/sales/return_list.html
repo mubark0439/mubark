@@ -1,0 +1,258 @@
+{% extends "sales/base_sales.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- تحسين العنوان وإضافة زر إنشاء جديد -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-container bg-warning text-white me-3" style="background-color: #051837;">
+                <i class="fas fa-undo fa-lg"></i>
+            </div>
+            <h1 class="h4 mb-0 text-gray-800" style="color: #051837;">قائمة المرتجعات</h1>
+        </div>
+        <a href="{% url 'sales:return-create' %}" class="btn btn-primary" style="background-color: #051837; border-color: #051837;">
+            <i class="fas fa-plus me-1"></i>
+            إنشاء مرتجع جديد
+        </a>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 text-white" style="background-color: #051837;">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-undo me-1"></i>
+                    سجل المرتجعات
+                </h6>
+                <!-- إضافة حقل البحث -->
+                <form method="get" class="d-flex">
+                    <div class="input-group">
+                        <input type="text" 
+                               name="q" 
+                               class="form-control form-control-sm" 
+                               placeholder="ابحث عن مرتجع..." 
+                               value="{{ request.GET.q }}"
+                               aria-label="بحث">
+                        <button class="btn btn-light btn-sm" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        {% if request.GET.q %}
+                        <a href="{% url 'sales:return-list' %}" class="btn btn-light btn-sm">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="dataTable" width="100%" cellspacing="0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th style="color: #051837;">رقم المرتجع</th>
+                            <th style="color: #051837;">رقم الفاتورة</th>
+                            <th style="color: #051837;">التاريخ</th>
+                            <th style="color: #051837;">المبلغ</th>
+                            <th style="color: #051837;">الحالة</th>
+                            <th style="color: #051837;">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for return in returns %}
+                        <tr class="hover-row">
+                            <td>{{ return.return_number }}</td>
+                            <td>
+                                <a href="{% url 'sales:sale-detail' pk=return.sale.pk %}" class="text-primary" style="color: #051837;">
+                                    {{ return.sale.invoice_number }}
+                                </a>
+                            </td>
+                            <td>{{ return.return_date|date:"Y-m-d" }}</td>
+                            <td>{{ return.total_amount }} ر.س</td>
+                            <td>
+                                <span class="badge 
+                                    {% if return.status == 'completed' %}bg-success
+                                    {% elif return.status == 'approved' %}bg-info
+                                    {% elif return.status == 'rejected' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ return.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'sales:return-detail' pk=return.pk %}" 
+                                       class="btn btn-outline-primary"
+                                       data-bs-toggle="tooltip" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if return.status == 'pending' %}
+                                    <a href="{% url 'sales:return-edit' pk=return.pk %}" 
+                                       class="btn btn-outline-warning"
+                                       data-bs-toggle="tooltip" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'sales:return-delete' pk=return.pk %}" 
+                                       class="btn btn-outline-danger"
+                                       data-bs-toggle="tooltip" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="empty-state">
+                                    <i class="fas fa-undo fa-3x mb-3" style="color: #051837;"></i>
+                                    <h5 style="color: #051837;">لا توجد مرتجعات مسجلة</h5>
+                                    <a href="{% url 'sales:return-create' %}" class="btn btn-primary mt-3" style="background-color: #051837; border-color: #051837;">
+                                        <i class="fas fa-plus me-1"></i> إنشاء مرتجع جديد
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- إضافة الترقيم الصفحي -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" style="color: #051837;">
+                            &laquo; السابق
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link" style="background-color: #051837; border-color: #051837;">{{ num }}</span>
+                    </li>
+                    {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" style="color: #051837;">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}" style="color: #051837;">
+                            التالي &raquo;
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* تحسينات التنسيق مع الألوان المطلوبة */
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+        --primary-lighter: rgba(5, 24, 55, 0.05);
+    }
+    
+    .icon-container {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: var(--primary-light);
+    }
+    
+    .icon-container i {
+        color: var(--primary-color);
+    }
+    
+    .hover-row:hover {
+        background-color: var(--primary-lighter);
+    }
+    
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .table th {
+        white-space: nowrap;
+        background-color: #f8f9fa;
+        border-bottom: 2px solid var(--primary-color);
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .btn-outline-primary {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .page-link:hover {
+        color: var(--primary-color);
+    }
+    
+    @media (max-width: 768px) {
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .input-group {
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        .table td:before {
+            color: var(--primary-color);
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تفعيل أدوات التلميح
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // إضافة بيانات-label للعرض على الجوال
+    if (window.innerWidth <= 768) {
+        const headers = document.querySelectorAll('thead th');
+        const cells = document.querySelectorAll('tbody td');
+        
+        headers.forEach((header, index) => {
+            const label = header.textContent.trim();
+            cells.forEach(cell => {
+                if (cell.cellIndex === index) {
+                    cell.setAttribute('data-label', label);
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

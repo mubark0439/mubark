@@ -1,0 +1,545 @@
+{% extends "sales/base_sales.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h2 class="mb-4">
+        <i class="fas {% if editing %}fa-edit{% else %}fa-file-invoice{% endif %} me-2"></i>
+        {% if editing %}تعديل{% else %}إنشاء{% endif %} فاتورة بيع
+    </h2>
+    
+    <form method="post" id="sale-form">
+        {% csrf_token %}
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-info-circle me-2"></i>معلومات الفاتورة</span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="id_customer" class="form-label fw-bold">العميل <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                {{ form.customer }}
+                                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#customerModal" title="إضافة عميل جديد">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <small class="form-text text-muted">اختر عميلاً من القائمة أو أضف جديداً</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="id_payment_method" class="form-label fw-bold">طريقة الدفع <span class="text-danger">*</span></label>
+                            {{ form.payment_method }}
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="id_discount" class="form-label fw-bold">الخصم (ر.س)</label>
+                            <div class="input-group">
+                                {{ form.discount }}
+                                <span class="input-group-text">ر.س</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group mt-3">
+                    <label for="id_notes" class="form-label fw-bold">ملاحظات</label>
+                    {{ form.notes }}
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4 border-primary">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <span><i class="fas fa-list-ul me-2"></i>بنود الفاتورة</span>
+                <button type="button" class="btn btn-success" id="add-item" title="إضافة بند جديد">
+                    <i class="fas fa-plus me-1"></i> إضافة بند
+                </button>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover mb-0" id="items-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th width="35%">المنتج <span class="text-danger">*</span></th>
+                                <th width="15%">الكمية المتاحة</th>
+                                <th width="15%">الكمية <span class="text-danger">*</span></th>
+                                <th width="15%">السعر (ر.س)</th>
+                                <th width="15%">المجموع (ر.س)</th>
+                                <th width="5%">حذف</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if editing %}
+                                {% for item in sale_items %}
+                                <tr class="align-middle">
+                                    <td>
+                                        <select name="product" class="form-select product-select" required>
+                                            <option value="">اختر منتجًا</option>
+                                            {% for product in products %}
+                                            <option value="{{ product.id }}" 
+                                                data-price="{{ product.price }}"
+                                                data-quantity="{{ product.quantity }}"
+                                                {% if product.id == item.product.id %}selected{% endif %}>
+                                                {{ product.name }} - {{ product.price }} ر.س
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td class="available-quantity">{{ item.product.quantity }}</td>
+                                    <td>
+                                        <input type="number" name="quantity" class="form-control quantity-input" 
+                                               min="1" value="{{ item.quantity }}" required>
+                                    </td>
+                                    <td class="unit-price">{{ item.unit_price }}</td>
+                                    <td class="item-total">{{ item.total_price }}</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-danger btn-sm remove-row" title="حذف البند">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr class="align-middle">
+                                    <td>
+                                        <select name="product" class="form-select product-select" required>
+                                            <option value="">اختر منتجًا</option>
+                                            {% for product in products %}
+                                            <option value="{{ product.id }}" 
+                                                data-price="{{ product.price }}"
+                                                data-quantity="{{ product.quantity }}">
+                                                {{ product.name }} - {{ product.price }} ر.س
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </td>
+                                    <td class="available-quantity">0</td>
+                                    <td>
+                                        <input type="number" name="quantity" class="form-control quantity-input" min="1" value="1" required>
+                                    </td>
+                                    <td class="unit-price">0.00</td>
+                                    <td class="item-total">0.00</td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-danger btn-sm remove-row" title="حذف البند" disabled>
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                        <tfoot class="table-group-divider">
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">المجموع الفرعي:</td>
+                                <td colspan="2" id="subtotal">0.00 ر.س</td>
+                            </tr>
+                            <tr>
+                                <td colspan="4" class="text-end fw-bold">الخصم:</td>
+                                <td colspan="2" id="discount-amount">{{ form.discount.value|default_if_none:"0.00" }} ر.س</td>
+                            </tr>
+                            <tr class="table-active">
+                                <td colspan="4" class="text-end fw-bold fs-5">المجموع الكلي:</td>
+                                <td colspan="2" id="total-amount" class="fs-5">0.00 ر.س</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="alert alert-info mt-3 mb-0">
+                    <i class="fas fa-info-circle me-2"></i>يمكنك إضافة عدة بنود للفاتورة عن طريق زر "إضافة بند"
+                </div>
+            </div>
+        </div>
+        
+        <div class="d-flex justify-content-end mt-4 gap-2">
+            <a href="{% url 'sales:sale-list' %}" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i> إلغاء
+            </a>
+            {% if editing %}
+            <a href="{% url 'sales:sale-delete' sale.pk %}" class="btn btn-danger">
+                <i class="fas fa-trash me-1"></i> حذف الفاتورة
+            </a>
+            {% endif %}
+            <button type="submit" class="btn btn-primary" id="submit-btn">
+                <i class="fas fa-save me-1"></i> {% if editing %}تحديث{% else %}حفظ{% endif %} الفاتورة
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Modal لإنشاء عميل جديد -->
+<div class="modal fade" id="customerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>إضافة عميل جديد</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customer-form" method="post" action="{% url 'core:customer-create' %}">
+                    {% csrf_token %}
+                    <div class="form-group mb-3">
+                        <label class="form-label fw-bold">الاسم <span class="text-danger">*</span></label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label fw-bold">الهاتف <span class="text-danger">*</span></label>
+                        <input type="text" name="phone" class="form-control" required>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label fw-bold">البريد الإلكتروني</label>
+                        <input type="email" name="email" class="form-control">
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label fw-bold">العنوان</label>
+                        <textarea name="address" class="form-control" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> إلغاء
+                </button>
+                <button type="button" class="btn btn-primary" id="save-customer">
+                    <i class="fas fa-save me-1"></i> حفظ العميل
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+$(document).ready(function() {
+    // تهيئة الأزرار عند التحميل
+    if ($('#items-table tbody tr').length === 1) {
+        $('#items-table tbody tr .remove-row').prop('disabled', true);
+    }
+
+    // دالة لتحديث صف واحد
+    function updateRow(row) {
+        const productSelect = row.find('.product-select');
+        const selectedOption = productSelect.find('option:selected');
+        
+        if (selectedOption.val()) {
+            const price = parseFloat(selectedOption.data('price'));
+            const availableQuantity = parseInt(selectedOption.data('quantity'));
+            const quantityInput = row.find('.quantity-input');
+            let quantity = parseInt(quantityInput.val()) || 1;
+            
+            // التحقق من أن الكمية لا تتجاوز المتاح
+            if (quantity > availableQuantity) {
+                quantity = availableQuantity;
+                quantityInput.val(availableQuantity);
+                
+                // إظهار تنبيه بشكل أفضل
+                const productName = selectedOption.text().split(' - ')[0];
+                showAlert(`الكمية المطلوبة لـ "${productName}" أكبر من الكمية المتاحة (${availableQuantity}). تم ضبط الكمية إلى الحد الأقصى.`, 'warning');
+            }
+            
+            // تحديث القيم في الصف
+            row.find('.available-quantity').text(availableQuantity);
+            row.find('.unit-price').text(price.toFixed(2));
+            const itemTotal = price * quantity;
+            row.find('.item-total').text(itemTotal.toFixed(2));
+            
+            // تمكين زر الحذف إذا كان هناك أكثر من صف
+            if ($('#items-table tbody tr').length > 1) {
+                row.find('.remove-row').prop('disabled', false);
+            }
+        } else {
+            row.find('.available-quantity').text('0');
+            row.find('.unit-price').text('0.00');
+            row.find('.item-total').text('0.00');
+        }
+    }
+
+    // دالة لعرض التنبيهات
+    function showAlert(message, type = 'danger') {
+        const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas ${type === 'danger' ? 'fa-exclamation-triangle' : 'fa-exclamation-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>`;
+        
+        // إزالة أي تنبيهات سابقة
+        $('.alert-dismissible').remove();
+        // إضافة التنبيه الجديد أعلى النموذج
+        $('#sale-form').prepend(alertHtml);
+    }
+
+    // دالة لحساب المجاميع
+    function updateTotals() {
+        let subtotal = 0;
+        let hasEmptyItems = false;
+        
+        $('.item-total').each(function() {
+            const total = parseFloat($(this).text()) || 0;
+            subtotal += total;
+            
+            // التحقق من وجود بنود فارغة
+            const row = $(this).closest('tr');
+            if (row.find('.product-select').val() === '') {
+                hasEmptyItems = true;
+            }
+        });
+        
+        $('#subtotal').text(subtotal.toFixed(2) + ' ر.س');
+        
+        const discount = parseFloat($('#id_discount').val()) || 0;
+        const total = subtotal - discount;
+        $('#total-amount').text(total.toFixed(2) + ' ر.س');
+        
+        // تمكين/تعطيل زر الحفظ بناءً على صحة البيانات
+        if (hasEmptyItems || subtotal <= 0) {
+            $('#submit-btn').prop('disabled', true);
+        } else {
+            $('#submit-btn').prop('disabled', false);
+        }
+    }
+
+    // أحداث التغيير
+    $(document).on('change', '.product-select, .quantity-input', function() {
+        const row = $(this).closest('tr');
+        updateRow(row);
+        updateTotals();
+    });
+
+    // حدث تغيير الخصم
+    $('#id_discount').on('input', function() {
+        const discountValue = parseFloat(this.value || 0);
+        $('#discount-amount').text(discountValue.toFixed(2) + ' ر.س');
+        updateTotals();
+    });
+
+    // حدث حذف صف
+    $(document).on('click', '.remove-row', function() {
+        if ($('#items-table tbody tr').length > 1) {
+            $(this).closest('tr').fadeOut(300, function() {
+                $(this).remove();
+                updateTotals();
+            });
+        } else {
+            showAlert('يجب أن تحتوي الفاتورة على بند واحد على الأقل.');
+        }
+    });
+
+    // حدث إضافة بند جديد
+    $('#add-item').click(function() {
+        const newRow = `
+        <tr class="align-middle">
+            <td>
+                <select name="product" class="form-select product-select" required>
+                    <option value="">اختر منتجًا</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}" 
+                        data-price="{{ product.price }}"
+                        data-quantity="{{ product.quantity }}">
+                        {{ product.name }} - {{ product.price }} ر.س
+                    </option>
+                    {% endfor %}
+                </select>
+            </td>
+            <td class="available-quantity">0</td>
+            <td>
+                <input type="number" name="quantity" class="form-control quantity-input" min="1" value="1" required>
+            </td>
+            <td class="unit-price">0.00</td>
+            <td class="item-total">0.00</td>
+            <td class="text-center">
+                <button type="button" class="btn btn-danger btn-sm remove-row" title="حذف البند">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        </tr>`;
+        
+        // إضافة الصف مع تأثير
+        $('#items-table tbody').append(newRow);
+        $('#items-table tbody tr:last').hide().fadeIn(300);
+        
+        // تمكين أزرار الحذف
+        if ($('#items-table tbody tr').length > 1) {
+            $('#items-table tbody tr .remove-row').prop('disabled', false);
+        }
+    });
+
+    // حفظ العميل الجديد
+    $('#save-customer').click(function() {
+        const form = $('#customer-form');
+        const name = form.find('[name="name"]').val().trim();
+        const phone = form.find('[name="phone"]').val().trim();
+        
+        if (!name || !phone) {
+            showAlert('الاسم وهاتف العميل حقول مطلوبة');
+            return;
+        }
+        
+        $.ajax({
+            url: form.attr('action'),
+            type: "POST",
+            data: form.serialize(),
+            success: function(response) {
+                if(response.success) {
+                    // إضافة العميل الجديد إلى القائمة المنسدلة
+                    $('#id_customer').append(new Option(response.customer.name, response.customer.id, true, true));
+                    $('#customerModal').modal('hide');
+                    form[0].reset();
+                    
+                    // إظهار رسالة نجاح
+                    showAlert('تم إضافة العميل بنجاح', 'success');
+                    setTimeout(() => $('.alert-dismissible').alert('close'), 3000);
+                }
+            },
+            error: function(xhr) {
+                showAlert('حدث خطأ أثناء حفظ العميل: ' + (xhr.responseJSON?.error || ''));
+            }
+        });
+    });
+
+    // التحقق من الصحة قبل الإرسال
+    $('#sale-form').on('submit', function(e) {
+        let isValid = true;
+        let errorMessage = '';
+        
+        // التحقق من اختيار عميل
+        if (!$('#id_customer').val()) {
+            isValid = false;
+            errorMessage = 'يجب اختيار عميل للفاتورة';
+        }
+        
+        // التحقق من البنود
+        $('.product-select').each(function() {
+            if ($(this).val() === '') {
+                isValid = false;
+                errorMessage = 'يجب اختيار منتج لكل بند في الفاتورة';
+                return false; // break the loop
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            showAlert(errorMessage);
+            $('html, body').animate({
+                scrollTop: 0
+            }, 500);
+        }
+    });
+
+    // تحديث القيم الأولية
+    $('#items-table tbody tr').each(function() {
+        updateRow($(this));
+    });
+    updateTotals();
+});
+</script>
+
+<style>
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+        --primary-lighter: rgba(5, 24, 55, 0.05);
+        --primary-dark: #040f2a;
+        --secondary-color: #6c757d;
+        --success-color: #343a40;
+        --danger-color: #dc3545;
+        --warning-color: #ffc107;
+        --info-color: #051837;
+        --light-color: #f8f9fa;
+        --dark-color: #343a40;
+    }
+
+    .card-header {
+        background-color: var(--primary-color) !important;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+
+    .btn-outline-primary {
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: var(--primary-lighter);
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(5, 24, 55, 0.15);
+    }
+
+    .available-quantity {
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .unit-price, .item-total {
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+
+    .alert-info {
+        background-color: rgba(23, 162, 184, 0.1);
+        border-left: 4px solid var(--info-color);
+    }
+
+    .alert-warning {
+        background-color: rgba(255, 193, 7, 0.1);
+        border-left: 4px solid var(--warning-color);
+    }
+
+    .alert-danger {
+        background-color: rgba(220, 53, 69, 0.1);
+        border-left: 4px solid var(--danger-color);
+    }
+
+    .alert-success {
+        background-color: rgba(40, 167, 69, 0.1);
+        border-left: 4px solid var(--success-color);
+    }
+
+    .table-light {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .table-active {
+        background-color: var(--primary-lighter);
+    }
+
+    .btn-success {
+        background-color: var(--success-color);
+        border-color: var(--success-color);
+    }
+
+    .btn-danger {
+        background-color: var(--danger-color);
+        border-color: var(--danger-color);
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+    .modal-header {
+        background-color: var(--primary-color);
+        color: white;
+    }
+</style>
+{% endblock %}

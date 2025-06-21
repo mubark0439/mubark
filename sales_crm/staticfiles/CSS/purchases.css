@@ -1,0 +1,42 @@
+/* ملف purchases.css في مجلد static/css */
+body {
+    font-family: 'Tajawal', sans-serif;
+}
+
+.table th {
+    font-weight: 600;
+}
+
+.card-title {
+    font-weight: 700;
+}
+
+.select2 {
+    width: 100%!important;
+}
+
+.rtl .select2-container--default .select2-selection--single .select2-selection__arrow {
+    left: 1px;
+    right: auto;
+}
+
+/* تنسيقات RTL إضافية */
+.text-end {
+    text-align: left!important;
+}
+
+.me-auto {
+    margin-left: auto!important;
+    margin-right: inherit!important;
+}
+
+/* تنسيقات للجداول */
+.table-responsive {
+    overflow-x: auto;
+}
+
+/* تنسيقات للأزرار */
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}

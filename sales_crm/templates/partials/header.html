@@ -1,0 +1,290 @@
+{% load static %}
+<header class="fixed-top" style="background-color: #051837; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center py-2">
+            <!-- الشعار -->
+            <div>
+                <a href="{% url 'core:dashboard' %}" class="text-decoration-none d-flex align-items-center">
+                    <div style="width: 40px; height: 40px; background-color: rgba(255, 255, 255, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; margin-left: 10px;">
+                        <i class="fas fa-store text-white"></i>
+                    </div>
+                    <h3 class="mb-0 text-white ms-2" style="font-weight: 600;">نظام الإدارة</h3>
+                </a>
+            </div>
+
+            <!-- قائمة الكمبيوتر -->
+            <nav class="d-none d-md-block">
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a class="nav-link text-white d-flex align-items-center py-2 px-3" href="{% url 'core:dashboard' %}" style="border-radius: 8px; transition: all 0.3s;">
+                            <i class="fas fa-tachometer-alt me-2"></i>
+                            <span>الصفحة الرئيسية</span>
+                        </a>
+                    </li>
+                    
+                    <!-- قسم المبيعات (للمبيعات والمدير) -->
+                    {% if user.is_sales or user.is_admin %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link text-white d-flex align-items-center py-2 px-3 dropdown-toggle" href="#" id="salesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px; transition: all 0.3s;">
+                            <i class="fas fa-cash-register me-2"></i>
+                            <span>المبيعات</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="salesDropdown" style="border-radius: 8px; border: none; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'sales:sale-list' %}"><i class="fas fa-list me-2"></i> قائمة الفواتير</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'sales:sale-create' %}"><i class="fas fa-plus-circle me-2"></i> فاتورة جديدة</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'sales:return-list' %}"><i class="fas fa-undo me-2"></i> المرتجعات</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- قسم العملاء (للمبيعات والمدير) -->
+                    {% if user.is_sales or user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link text-white d-flex align-items-center py-2 px-3" href="{% url 'core:customer-list' %}" style="border-radius: 8px; transition: all 0.3s;">
+                            <i class="fas fa-users me-2"></i>
+                            <span>العملاء</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- قسم المنتجات (للمبيعات والمدير) -->
+                    {% if user.is_sales or user.is_admin %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link text-white d-flex align-items-center py-2 px-3 dropdown-toggle" href="#" id="productsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px; transition: all 0.3s;">
+                            <i class="fas fa-boxes me-2"></i>
+                            <span>المنتجات</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="productsDropdown" style="border-radius: 8px; border: none; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'products:product-list' %}"><i class="fas fa-list me-2"></i> قائمة المنتجات</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'products:product-create' %}"><i class="fas fa-plus-circle me-2"></i> إضافة منتج جديد</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'products:category-list' %}"><i class="fas fa-tags me-2"></i> الفئات</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'products:out-of-stock' %}"><i class="fas fa-exclamation-triangle me-2"></i> المنتجات النافذة</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- قسم المشتريات (للمشتريات والمدير فقط) -->
+                    {% if user.is_purchases or user.is_admin %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link text-white d-flex align-items-center py-2 px-3 dropdown-toggle" href="#" id="purchasesDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px; transition: all 0.3s;">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            <span>المشتريات</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="purchasesDropdown" style="border-radius: 8px; border: none; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'purchases:order-list' %}"><i class="fas fa-list me-2"></i> قائمة الطلبات</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'purchases:order-create' %}"><i class="fas fa-plus-circle me-2"></i> طلب جديد</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'purchases:supplier-list' %}"><i class="fas fa-truck me-2"></i> الموردين</a></li>
+                            <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'purchases:return-list' %}"><i class="fas fa-undo me-2"></i> مرتجعات المشتريات</a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                    
+                    <!-- قسم الموظفين (للمدير فقط) -->
+                    {% if user.is_admin %}
+                    <li class="nav-item">
+                        <a class="nav-link text-white d-flex align-items-center py-2 px-3" href="{% url 'core:employee-list' %}" style="border-radius: 8px; transition: all 0.3s;">
+                            <i class="fas fa-user-tie me-2"></i>
+                            <span>الموظفين</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+
+            <!-- قائمة الجوال -->
+            <div class="d-flex align-items-center">
+                <!-- زر تسجيل الخروج للجوال -->
+                <a href="{% url 'core:logout' %}" class="btn btn-outline-light d-md-none me-2 d-flex align-items-center" style="border-radius: 8px; border-color: rgba(255, 255, 255, 0.3);">
+                    <i class="fas fa-sign-out-alt me-1"></i>
+                </a>
+                
+                <!-- القائمة المتنقلة للجوال -->
+                <div class="dropdown d-md-none">
+                    <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" type="button" id="mobileMenu" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px; border-color: rgba(255, 255, 255, 0.3);">
+                        <i class="fas fa-bars me-1"></i>
+                        <span>القائمة</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="mobileMenu" style="border-radius: 8px; border: none; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1); width: 280px;">
+                        <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'core:dashboard' %}"><i class="fas fa-tachometer-alt me-2"></i> لوحة التحكم</a></li>
+                        <li><hr class="dropdown-divider my-1"></li>
+                        
+                        <!-- قسم المبيعات (للمبيعات والمدير) -->
+                        {% if user.is_sales or user.is_admin %}
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-submenu-toggle d-flex justify-content-between align-items-center py-2" href="#" role="button">
+                                <span><i class="fas fa-cash-register me-2"></i> المبيعات</span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-submenu-content" style="border-radius: 8px;">
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'sales:sale-list' %}"><i class="fas fa-list me-2"></i> قائمة الفواتير</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'sales:sale-create' %}"><i class="fas fa-plus-circle me-2"></i> فاتورة جديدة</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'sales:return-list' %}"><i class="fas fa-undo me-2"></i> المرتجعات</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- قسم العملاء (للمبيعات والمدير) -->
+                        {% if user.is_sales or user.is_admin %}
+                        <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'core:customer-list' %}"><i class="fas fa-users me-2"></i> العملاء</a></li>
+                        {% endif %}
+                        
+                        <!-- قسم المنتجات (للمبيعات والمدير) -->
+                        {% if user.is_sales or user.is_admin %}
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-submenu-toggle d-flex justify-content-between align-items-center py-2" href="#" role="button">
+                                <span><i class="fas fa-boxes me-2"></i> المنتجات</span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-submenu-content" style="border-radius: 8px;">
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'products:product-list' %}"><i class="fas fa-list me-2"></i> قائمة المنتجات</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'products:product-create' %}"><i class="fas fa-plus-circle me-2"></i> إضافة منتج جديد</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'products:category-list' %}"><i class="fas fa-tags me-2"></i> الفئات</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'products:out-of-stock' %}"><i class="fas fa-exclamation-triangle me-2"></i> المنتجات النافذة</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- قسم المشتريات (للمشتريات والمدير فقط) -->
+                        {% if user.is_purchases or user.is_admin %}
+                        <li class="dropdown-submenu">
+                            <a class="dropdown-item dropdown-submenu-toggle d-flex justify-content-between align-items-center py-2" href="#" role="button">
+                                <span><i class="fas fa-shopping-cart me-2"></i> المشتريات</span>
+                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                            </a>
+                            <ul class="dropdown-menu dropdown-submenu-content" style="border-radius: 8px;">
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'purchases:order-list' %}"><i class="fas fa-list me-2"></i> قائمة الطلبات</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'purchases:order-create' %}"><i class="fas fa-plus-circle me-2"></i> طلب جديد</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'purchases:supplier-list' %}"><i class="fas fa-truck me-2"></i> الموردين</a></li>
+                                <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'purchases:return-list' %}"><i class="fas fa-undo me-2"></i> مرتجعات المشتريات</a></li>
+                            </ul>
+                        </li>
+                        {% endif %}
+                        
+                        <!-- قسم الموظفين (للمدير فقط) -->
+                        {% if user.is_admin %}
+                        <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'core:employee-list' %}"><i class="fas fa-user-tie me-2"></i> الموظفين</a></li>
+                        {% endif %}
+                        
+                        <li><hr class="dropdown-divider my-1"></li>
+                        <li><a class="dropdown-item d-flex align-items-center py-2" href="{% url 'core:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> تسجيل خروج</a></li>
+                    </ul>
+                </div>
+                
+                <!-- قائمة المستخدم للكمبيوتر -->
+                <div class="dropdown d-none d-md-block">
+                    <button class="btn btn-outline-light dropdown-toggle d-flex align-items-center" type="button" id="userMenu" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 8px; border-color: rgba(255, 255, 255, 0.3);">
+                        <i class="fas fa-user-circle me-1"></i>
+                        {{ user.username }}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu" style="border-radius: 8px; border: none; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);">
+                        <li><a class="dropdown-item d-flex align-items-center py-2" href="#">
+                            <i class="fas fa-cog me-2"></i>الإعدادات
+                        </a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger d-flex align-items-center py-2" href="{% url 'core:logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                تسجيل الخروج
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<style>
+    /* تنسيقات خاصة بالجوال فقط */
+    @media (max-width: 767.98px) {
+        .dropdown-submenu {
+            position: relative;
+        }
+        
+        .dropdown-submenu .dropdown-submenu-content {
+            display: none;
+            position: static;
+            margin: 0;
+            border: none;
+            box-shadow: none;
+            background-color: rgba(0, 0, 0, 0.05);
+            padding-right: 15px;
+        }
+        
+        .dropdown-submenu .dropdown-submenu-content.show {
+            display: block;
+        }
+        
+        .dropdown-submenu .dropdown-arrow {
+            transition: transform 0.2s;
+        }
+        
+        .dropdown-submenu .dropdown-arrow.rotated {
+            transform: rotate(180deg);
+        }
+        
+        .dropdown-submenu-toggle::after {
+            display: none;
+        }
+    }
+
+    /* تحسينات عامة للهيدر */
+    .nav-link:hover {
+        background-color: rgba(255, 255, 255, 0.1) !important;
+    }
+    
+    .dropdown-item:hover {
+        background-color: #f8f9fa !important;
+        color: #051837 !important;
+    }
+    
+    .dropdown-menu {
+        margin-top: 5px !important;
+    }
+    
+    /* تنسيق أيقونات تسجيل الخروج */
+    .btn-outline-light i {
+        margin-right: 0.25rem;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تفعيل القوائم الفرعية على الجوال
+        const submenuToggles = document.querySelectorAll('.dropdown-submenu-toggle');
+        
+        submenuToggles.forEach(toggle => {
+            toggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                const submenu = this.closest('.dropdown-submenu');
+                const content = submenu.querySelector('.dropdown-submenu-content');
+                const arrow = submenu.querySelector('.dropdown-arrow');
+                
+                content.classList.toggle('show');
+                arrow.classList.toggle('rotated');
+                
+                // إغلاق القوائم الفرعية الأخرى
+                document.querySelectorAll('.dropdown-submenu-content').forEach(otherContent => {
+                    if (otherContent !== content) {
+                        otherContent.classList.remove('show');
+                    }
+                });
+                
+                document.querySelectorAll('.dropdown-arrow').forEach(otherArrow => {
+                    if (otherArrow !== arrow) {
+                        otherArrow.classList.remove('rotated');
+                    }
+                });
+            });
+        });
+        
+        // منع إغلاق القائمة عند النقر داخل القائمة الفرعية
+        document.querySelectorAll('.dropdown-submenu-content').forEach(content => {
+            content.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+    });
+</script>

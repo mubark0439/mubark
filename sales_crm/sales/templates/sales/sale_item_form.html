@@ -1,0 +1,112 @@
+<div class="sale-item row mb-3 align-items-center">
+    <div class="col-md-5 mb-2 mb-md-0">
+        <select name="product" class="form-select product-select shadow-sm" required>
+            <option value="">--- اختر منتجًا ---</option>
+            {% for product in products %}
+            <option value="{{ product.pk }}" 
+                    data-price="{{ product.price }}"
+                    data-stock="{{ product.quantity }}"
+                    {% if product.quantity <= 0 %}disabled{% endif %}>
+                {{ product.name }} 
+                ({{ product.price }} ر.س)
+                {% if product.quantity > 0 %}
+                - متاح: {{ product.quantity }}
+                {% else %}
+                - غير متوفر
+                {% endif %}
+            </option>
+            {% endfor %}
+        </select>
+        <small class="text-muted stock-message d-none"></small>
+    </div>
+    <div class="col-md-2 mb-2 mb-md-0">
+        <input type="number" name="quantity" class="form-control quantity-input shadow-sm" 
+               min="1" value="1" required>
+    </div>
+    <div class="col-md-2 mb-2 mb-md-0">
+        <div class="input-group">
+            <input type="text" class="form-control price-input shadow-sm" readonly>
+            <span class="input-group-text">ر.س</span>
+        </div>
+    </div>
+    <div class="col-md-2 mb-2 mb-md-0">
+        <div class="input-group">
+            <input type="text" class="form-control total-input shadow-sm" readonly>
+            <span class="input-group-text">ر.س</span>
+        </div>
+    </div>
+    <div class="col-md-1 text-center">
+        <button type="button" class="btn btn-outline-danger btn-sm remove-item rounded-circle" 
+                style="width: 36px; height: 36px;">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+</div>
+
+<style>
+    .sale-item {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .sale-item:hover {
+        background-color: #f1f3f5;
+    }
+    
+    .product-select:invalid {
+        color: #6c757d;
+    }
+    
+    .remove-item {
+        transition: all 0.2s;
+    }
+    
+    .remove-item:hover {
+        transform: scale(1.1);
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تحديث السعر والمجموع عند تغيير المنتج أو الكمية
+    document.querySelectorAll('.sale-item').forEach(item => {
+        const productSelect = item.querySelector('.product-select');
+        const quantityInput = item.querySelector('.quantity-input');
+        const priceInput = item.querySelector('.price-input');
+        const totalInput = item.querySelector('.total-input');
+        const stockMessage = item.querySelector('.stock-message');
+        
+        function updateValues() {
+            if (productSelect.value) {
+                const price = parseFloat(productSelect.selectedOptions[0].dataset.price);
+                const stock = parseInt(productSelect.selectedOptions[0].dataset.stock);
+                const quantity = parseInt(quantityInput.value) || 1;
+                
+                priceInput.value = price.toFixed(2);
+                totalInput.value = (price * quantity).toFixed(2);
+                
+                // التحقق من الكمية المتاحة
+                if (quantity > stock) {
+                    stockMessage.textContent = `الكمية المتاحة: ${stock}`;
+                    stockMessage.classList.remove('d-none');
+                    stockMessage.classList.remove('text-success');
+                    stockMessage.classList.add('text-danger');
+                    quantityInput.classList.add('is-invalid');
+                } else {
+                    stockMessage.classList.add('d-none');
+                    quantityInput.classList.remove('is-invalid');
+                }
+            } else {
+                priceInput.value = '';
+                totalInput.value = '';
+                stockMessage.classList.add('d-none');
+            }
+        }
+        
+        productSelect.addEventListener('change', updateValues);
+        quantityInput.addEventListener('input', updateValues);
+    });
+});
+</script>

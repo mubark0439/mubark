@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="max-width: 800px; margin: 2rem auto;">
+    <div class="card shadow-lg" style="border: none; border-radius: 12px; overflow: hidden;">
+        <div class="card-header text-white" style="background-color: #051837; padding: 1.25rem 1.5rem;">
+            <h4><i class="fas fa-user-edit me-2"></i>{{ title }}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row">
+                    <div class="col-md-8 mx-auto">
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label" style="font-weight: 600; color: #051837;">
+                                <i class="fas 
+                                    {% if field.name == 'name' %}fa-user 
+                                    {% elif field.name == 'phone' %}fa-phone 
+                                    {% elif field.name == 'email' %}fa-envelope 
+                                    {% elif field.name == 'address' %}fa-map-marker-alt 
+                                    {% else %}fa-info-circle{% endif %} 
+                                    me-2"></i>
+                                {{ field.label }}
+                            </label>
+                            {{ field }}
+                            {% if field.help_text %}
+                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                            {% endif %}
+                            {% for error in field.errors %}
+                            <div class="invalid-feedback d-block">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="d-flex justify-content-center gap-3 mt-4">
+                    <button type="submit" class="btn text-white" style="background-color: #051837; border-radius: 8px; padding: 0.75rem 2rem; font-weight: 600;">
+                        <i class="fas fa-save me-2"></i> حفظ البيانات
+                    </button>
+                    <a href="{% if customer %}{% url 'core:customer-detail' customer.pk %}{% else %}{% url 'core:customer-list' %}{% endif %}" 
+                       class="btn btn-outline-secondary" style="border-radius: 8px; padding: 0.75rem 2rem;">
+                        <i class="fas fa-times me-2"></i> إلغاء
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // إضافة class is-invalid للحقول التي بها أخطاء
+    const formFields = document.querySelectorAll('form .form-control');
+    formFields.forEach(field => {
+        if (field.nextElementSibling && field.nextElementSibling.classList.contains('invalid-feedback')) {
+            field.classList.add('is-invalid');
+            field.style.borderColor = '#dc3545';
+        }
+    });
+    
+    // تحسين ظهور الحقول عند التركيز
+    formFields.forEach(field => {
+        field.addEventListener('focus', function() {
+            this.style.borderColor = '#051837';
+            this.style.boxShadow = '0 0 0 0.25rem rgba(5, 24, 55, 0.1)';
+        });
+        field.addEventListener('blur', function() {
+            this.style.boxShadow = 'none';
+        });
+    });
+});
+</script>
+{% endblock %}

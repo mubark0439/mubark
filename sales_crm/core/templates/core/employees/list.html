@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+        <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #051837; border-radius: 12px 12px 0 0 !important;">
+            <h2 class="m-0 text-white">
+                <i class="fas fa-user-tie me-2"></i>إدارة الموظفين
+            </h2>
+            {% if request.user.is_admin %}
+            <a href="{% url 'core:employee-create' %}" class="btn btn-success">
+                <i class="fas fa-plus-circle me-2"></i>إضافة موظف
+            </a>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="color: #051837;">اسم المستخدم</th>
+                            <th style="color: #051837;">البريد الإلكتروني</th>
+                            <th style="color: #051837;">الدور</th>
+                            <th style="color: #051837;">الهاتف</th>
+                            <th style="color: #051837; width: 180px;">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="symbol symbol-40px me-3">
+                                        <div class="symbol-label bg-light-primary">
+                                            <i class="fas fa-user fs-2 text-primary"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ employee.username }}</div>
+                                        <div class="text-muted fs-7">{{ employee.get_full_name|default:"-" }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ employee.email|default:"-" }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if employee.role == 'admin' %}bg-primary
+                                    {% elif employee.role == 'sales' %}bg-success
+                                    {% else %}bg-info{% endif %} py-2 px-3">
+                                    {{ employee.get_role_display }}
+                                </span>
+                            </td>
+                            <td>{{ employee.phone|default:"-" }}</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    {% if request.user.is_admin %}
+                                        <a href="{% url 'core:employee-update' employee.pk %}" class="btn btn-sm btn-primary px-3 py-2">
+                                            <i class="fas fa-edit me-1"></i>تعديل
+                                        </a>
+                                        {% if employee != request.user %}
+                                        <a href="{% url 'core:employee-delete' employee.pk %}" class="btn btn-sm btn-danger px-3 py-2">
+                                            <i class="fas fa-trash-alt me-1"></i>حذف
+                                        </a>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="py-4">
+                                    <i class="fas fa-users-slash fa-3x mb-3" style="color: #051837; opacity: 0.3;"></i>
+                                    <h5 class="text-muted">لا يوجد موظفين مسجلين</h5>
+                                    {% if request.user.is_admin %}
+                                    <p class="text-muted mt-2">يمكنك إضافة موظف جديد باستخدام زر "إضافة موظف"</p>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(5, 24, 55, 0.03);
+        cursor: pointer;
+    }
+    
+    .symbol {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .symbol-40px {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .symbol-label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.475rem;
+        width: 100%;
+        height: 100%;
+    }
+    
+    .bg-light-primary {
+        background-color: rgba(5, 24, 55, 0.1) !important;
+    }
+    
+    .btn-sm {
+        border-radius: 6px;
+    }
+</style>
+{% endblock %}

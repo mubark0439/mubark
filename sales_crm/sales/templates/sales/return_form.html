@@ -1,0 +1,562 @@
+{% extends "sales/base_sales.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card shadow">
+        <div class="card-header py-3 text-white" style="background-color: #051837;">
+            <h6 class="m-0 font-weight-bold">
+                <i class="fas fa-undo me-1"></i>
+                {% if editing %}تعديل{% else %}إنشاء{% endif %} مرتجع
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="post" id="return-form">
+                {% csrf_token %}
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">الفاتورة الأصلية</label>
+                            {{ form.sale }}
+                            {% if form.sale.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.sale.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label fw-bold">سبب الإرجاع الرئيسي</label>
+                            {{ form.reason }}
+                            {% if form.reason.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.reason.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- عرض تفاصيل الفاتورة المختارة -->
+                <div class="card mb-4 border-primary" id="sale-details-container" style="display: none;">
+                    <div class="card-header text-white" style="background-color: #051837;">
+                        <h6 class="m-0"><i class="fas fa-info-circle me-1"></i> تفاصيل الفاتورة المختارة</h6>
+                    </div>
+                    <div class="card-body">
+                        <div id="sale-details-content"></div>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">بنود المرتجع</label>
+                    <div class="alert alert-info mb-3">
+                        <i class="fas fa-info-circle me-2"></i> اختر الفاتورة أولاً لعرض الأصناف المتاحة للإرجاع
+                    </div>
+                    <div id="return-items-container" class="border rounded p-3 bg-light">
+                        {% if editing %}
+                            {% for item in return_items %}
+                            <div class="return-item row mb-3 p-2 bg-white rounded position-relative">
+                                <div class="col-md-5 mb-2">
+                                    <label class="form-label small text-muted">الصنف</label>
+                                    <select name="sale_item" class="form-select" required>
+                                        <option value="{{ item.sale_item.id }}" selected>
+                                            {{ item.sale_item.product.name }} (المباع: {{ item.sale_item.quantity }})
+                                        </option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                    <label class="form-label small text-muted">الكمية</label>
+                                    <input type="number" name="quantity" class="form-control" 
+                                           min="1" max="{{ item.sale_item.quantity }}" 
+                                           value="{{ item.quantity }}" required>
+                                </div>
+                                <div class="col-md-4 mb-2">
+                                    <label class="form-label small text-muted">السبب</label>
+                                    <textarea name="item_reason" class="form-control" 
+                                              rows="2" required>{{ item.reason }}</textarea>
+                                </div>
+                                <div class="col-md-1 d-flex align-items-end mb-2">
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-item" 
+                                            data-bs-toggle="tooltip" title="حذف البند">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    
+                    <button type="button" class="btn btn-sm mt-2" id="add-item" style="background-color: #051837; color: white;">
+                        <i class="fas fa-plus me-1"></i> إضافة بند
+                    </button>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label fw-bold">ملاحظات</label>
+                    {{ form.notes }}
+                </div>
+
+                <div class="d-flex justify-content-between border-top pt-3">
+                    <a href="{% if editing %}{% url 'sales:return-detail' pk=return_entry.pk %}{% else %}{% url 'sales:return-list' %}{% endif %}" 
+                       class="btn btn-secondary">
+                        <i class="fas fa-times me-1"></i> إلغاء
+                    </a>
+                    <button type="submit" class="btn text-white" style="background-color: #051837;">
+                        <i class="fas fa-save me-1"></i> حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const saleSelect = document.querySelector('#id_sale');
+        const itemsContainer = document.querySelector('#return-items-container');
+        const addItemBtn = document.querySelector('#add-item');
+        const returnForm = document.querySelector('#return-form');
+        const saleDetailsContainer = document.querySelector('#sale-details-container');
+        const saleDetailsContent = document.querySelector('#sale-details-content');
+        
+        // تحسين مظهر حقول الإدخال
+        document.querySelectorAll('select, textarea, input').forEach(el => {
+            el.classList.add('form-control-sm');
+        });
+
+        // عند تغيير الفاتورة
+        if (saleSelect) {
+            saleSelect.addEventListener('change', function() {
+                const saleId = this.value;
+                if (!saleId) {
+                    saleDetailsContainer.style.display = 'none';
+                    itemsContainer.innerHTML = '';
+                    return;
+                }
+                
+                // عرض تحميل
+                saleDetailsContent.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i> جاري تحميل بيانات الفاتورة...</div>';
+                saleDetailsContainer.style.display = 'block';
+                
+                // جلب تفاصيل الفاتورة
+                fetch(`/sales/sale-details-json/${saleId}/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        // عرض تفاصيل الفاتورة
+                        let detailsHtml = `
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p><strong>رقم الفاتورة:</strong> ${data.invoice_number}</p>
+                                    <p><strong>التاريخ:</strong> ${data.sale_date}</p>
+                                    <p><strong>العميل:</strong> ${data.customer_name || 'لا يوجد'}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p><strong>طريقة الدفع:</strong> ${data.payment_method_display}</p>
+                                    <p><strong>الخصم:</strong> ${data.discount} ر.س</p>
+                                    <p><strong>الإجمالي:</strong> ${data.total_amount} ر.س</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <h6><i class="fas fa-boxes me-1"></i> بنود الفاتورة</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered table-sm">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>المنتج</th>
+                                            <th>الكمية</th>
+                                            <th>سعر الوحدة</th>
+                                            <th>المجموع</th>
+                                            <th>الكمية المرتجعة سابقاً</th>
+                                            <th>المتبقي للإرجاع</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                        
+                        data.items.forEach(item => {
+                            detailsHtml += `
+                                <tr>
+                                    <td>${item.product_name}</td>
+                                    <td>${item.quantity}</td>
+                                    <td>${item.unit_price} ر.س</td>
+                                    <td>${item.total_price} ر.س</td>
+                                    <td>${item.returned_quantity || 0}</td>
+                                    <td>${item.max_returnable}</td>
+                                </tr>`;
+                        });
+                        
+                        detailsHtml += `</tbody></table></div>`;
+                        
+                        saleDetailsContent.innerHTML = detailsHtml;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching sale details:', error);
+                        saleDetailsContainer.style.display = 'none';
+                    });
+                
+                // جلب العناصر للإرجاع
+                itemsContainer.innerHTML = '<div class="text-center py-3"><i class="fas fa-spinner fa-spin me-2"></i> جاري تحميل الأصناف المتاحة...</div>';
+                
+                fetch(`{% url 'sales:get-sale-items' %}?sale_id=${saleId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        itemsContainer.innerHTML = '';
+                        if (data.length === 0) {
+                            itemsContainer.innerHTML = '<div class="alert alert-warning">لا توجد أصناف متاحة للإرجاع في هذه الفاتورة</div>';
+                            return;
+                        }
+                        
+                        let hasAvailableItems = false;
+                        data.forEach(item => {
+                            if (item.max_returnable > 0) {
+                                addItemRow(item);
+                                hasAvailableItems = true;
+                            }
+                        });
+                        
+                        if (!hasAvailableItems) {
+                            itemsContainer.innerHTML = '<div class="alert alert-warning">لا توجد أصناف متاحة للإرجاع في هذه الفاتورة</div>';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching items:', error);
+                        itemsContainer.innerHTML = '';
+                    });
+            });
+            
+            // تحميل العناصر عند التعديل
+            {% if editing %}
+                const saleId = saleSelect.value;
+                if (saleId) {
+                    fetch(`/sales/sale-details-json/${saleId}/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            let detailsHtml = `
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>رقم الفاتورة:</strong> ${data.invoice_number}</p>
+                                        <p><strong>التاريخ:</strong> ${data.sale_date}</p>
+                                        <p><strong>العميل:</strong> ${data.customer_name || 'لا يوجد'}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>طريقة الدفع:</strong> ${data.payment_method_display}</p>
+                                        <p><strong>الخصم:</strong> ${data.discount} ر.س</p>
+                                        <p><strong>الإجمالي:</strong> ${data.total_amount} ر.س</p>
+                                    </div>
+                                </div>
+                                <hr>
+                                <h6>بنود الفاتورة</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>المنتج</th>
+                                                <th>الكمية</th>
+                                                <th>سعر الوحدة</th>
+                                                <th>المجموع</th>
+                                                <th>الكمية المرتجعة سابقاً</th>
+                                                <th>المتبقي للإرجاع</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+                            
+                            data.items.forEach(item => {
+                                detailsHtml += `
+                                    <tr>
+                                        <td>${item.product_name}</td>
+                                        <td>${item.quantity}</td>
+                                        <td>${item.unit_price} ر.س</td>
+                                        <td>${item.total_price} ر.س</td>
+                                        <td>${item.returned_quantity || 0}</td>
+                                        <td>${item.max_returnable}</td>
+                                    </tr>`;
+                            });
+                            
+                            detailsHtml += `</tbody></table></div>`;
+                            
+                            saleDetailsContent.innerHTML = detailsHtml;
+                            saleDetailsContainer.style.display = 'block';
+                        })
+                        .catch(error => {
+                            console.error('Error fetching sale details:', error);
+                        });
+                    
+                    fetch(`{% url 'sales:get-sale-items' %}?sale_id=${saleId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            const existingItems = Array.from(itemsContainer.querySelectorAll('select[name="sale_item"]'))
+                                .map(select => select.value);
+                            
+                            data.forEach(item => {
+                                if (item.max_returnable > 0 && !existingItems.includes(item.id.toString())) {
+                                    addItemRow(item);
+                                }
+                            });
+                        })
+                        .catch(error => {
+                            console.error('Error fetching items:', error);
+                        });
+                }
+            {% endif %}
+        }
+        
+        // إضافة بند جديد
+        if (addItemBtn) {
+            addItemBtn.addEventListener('click', async function() {
+                const saleId = saleSelect.value;
+                if (!saleId) {
+                    showAlert('يجب اختيار فاتورة أولاً', 'warning');
+                    return;
+                }
+                
+                try {
+                    const url = `{% url 'sales:get-sale-items' %}?sale_id=${saleId}`;
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    
+                    const data = await response.json();
+                    const availableItems = data.filter(item => item.max_returnable > 0);
+                    
+                    if (availableItems.length === 0) {
+                        showAlert('لا توجد أصناف متاحة للإرجاع في هذه الفاتورة', 'warning');
+                        return;
+                    }
+                    
+                    // إنشاء قائمة منسدلة لاختيار الصنف
+                    const select = document.createElement('select');
+                    select.name = 'sale_item';
+                    select.className = 'form-select form-select-sm';
+                    select.required = true;
+                    
+                    // إضافة خيار افتراضي
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = '';
+                    defaultOption.textContent = 'اختر صنفاً';
+                    defaultOption.selected = true;
+                    defaultOption.disabled = true;
+                    select.appendChild(defaultOption);
+                    
+                    availableItems.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = `${item.product_name} (المتبقي للإرجاع: ${item.max_returnable})`;
+                        select.appendChild(option);
+                    });
+                    
+                    // إنشاء صف جديد
+                    const row = document.createElement('div');
+                    row.className = 'return-item row mb-3 p-2 bg-white rounded position-relative';
+                    
+                    const col1 = document.createElement('div');
+                    col1.className = 'col-md-5 mb-2';
+                    const label1 = document.createElement('label');
+                    label1.className = 'form-label small text-muted';
+                    label1.textContent = 'الصنف';
+                    col1.appendChild(label1);
+                    col1.appendChild(select);
+                    
+                    const col2 = document.createElement('div');
+                    col2.className = 'col-md-2 mb-2';
+                    const label2 = document.createElement('label');
+                    label2.className = 'form-label small text-muted';
+                    label2.textContent = 'الكمية';
+                    const qtyInput = document.createElement('input');
+                    qtyInput.type = 'number';
+                    qtyInput.name = 'quantity';
+                    qtyInput.className = 'form-control form-control-sm';
+                    qtyInput.min = '1';
+                    qtyInput.max = availableItems[0].max_returnable;
+                    qtyInput.value = '1';
+                    qtyInput.required = true;
+                    col2.appendChild(label2);
+                    col2.appendChild(qtyInput);
+                    
+                    const col3 = document.createElement('div');
+                    col3.className = 'col-md-4 mb-2';
+                    const label3 = document.createElement('label');
+                    label3.className = 'form-label small text-muted';
+                    label3.textContent = 'السبب';
+                    const reasonInput = document.createElement('textarea');
+                    reasonInput.name = 'item_reason';
+                    reasonInput.className = 'form-control form-control-sm';
+                    reasonInput.rows = '2';
+                    reasonInput.required = true;
+                    reasonInput.placeholder = 'سبب الإرجاع';
+                    col3.appendChild(label3);
+                    col3.appendChild(reasonInput);
+                    
+                    const col4 = document.createElement('div');
+                    col4.className = 'col-md-1 d-flex align-items-end mb-2';
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.type = 'button';
+                    deleteBtn.className = 'btn btn-sm btn-outline-danger delete-item';
+                    deleteBtn.setAttribute('data-bs-toggle', 'tooltip');
+                    deleteBtn.setAttribute('title', 'حذف البند');
+                    deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+                    col4.appendChild(deleteBtn);
+                    
+                    row.appendChild(col1);
+                    row.appendChild(col2);
+                    row.appendChild(col3);
+                    row.appendChild(col4);
+                    
+                    itemsContainer.appendChild(row);
+                    
+                    // تحديث الحد الأقصى للكمية عند تغيير الصنف
+                    select.addEventListener('change', function() {
+                        const selectedItem = availableItems.find(item => item.id.toString() === this.value);
+                        if (selectedItem) {
+                            qtyInput.max = selectedItem.max_returnable;
+                            if (parseInt(qtyInput.value) > selectedItem.max_returnable) {
+                                qtyInput.value = selectedItem.max_returnable;
+                            }
+                        }
+                    });
+                    
+                    // إضافة حدث الحذف للزر الجديد
+                    deleteBtn.addEventListener('click', function() {
+                        row.remove();
+                    });
+                    
+                    // تفعيل أداة التلميح
+                    new bootstrap.Tooltip(deleteBtn);
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                }
+            });
+        }
+        
+        // معالجة أحداث الحذف للبنود الموجودة مسبقاً
+        document.querySelectorAll('.delete-item').forEach(btn => {
+            btn.addEventListener('click', function() {
+                this.closest('.return-item').remove();
+            });
+            
+            // تفعيل أداة التلميح
+            new bootstrap.Tooltip(btn);
+        });
+
+        // التحقق من النموذج قبل الإرسال
+        if (returnForm) {
+            returnForm.addEventListener('submit', function(e) {
+                const items = itemsContainer.querySelectorAll('.return-item');
+                if (items.length === 0) {
+                    e.preventDefault();
+                    showAlert('يجب إضافة بند واحد على الأقل للمرتجع', 'danger');
+                    return false;
+                }
+                
+                // التحقق من أن جميع الكميات صالحة
+                let valid = true;
+                items.forEach(item => {
+                    const qtyInput = item.querySelector('input[name="quantity"]');
+                    const maxQty = parseInt(qtyInput.max);
+                    const enteredQty = parseInt(qtyInput.value);
+                    
+                    if (enteredQty < 1 || enteredQty > maxQty) {
+                        valid = false;
+                        qtyInput.classList.add('is-invalid');
+                    } else {
+                        qtyInput.classList.remove('is-invalid');
+                    }
+                });
+                
+                if (!valid) {
+                    e.preventDefault();
+                    showAlert('يجب أن تكون الكمية المدخلة بين 1 والحد الأقصى المتاح للإرجاع', 'danger');
+                    return false;
+                }
+                
+                return true;
+            });
+        }
+        
+        // دالة مساعدة لعرض التنبيهات
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show mb-3`;
+            alertDiv.innerHTML = `
+                <i class="fas fa-${type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            // إضافة التنبيه أعلى النموذج
+            returnForm.prepend(alertDiv);
+            
+            // إزالة التنبيه بعد 5 ثواني
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+    });
+</script>
+
+<style>
+    /* تحسينات التنسيق مع الحفاظ على الهوية */
+    .card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .form-label {
+        margin-bottom: 0.5rem;
+    }
+    
+    .return-item {
+        transition: all 0.3s ease;
+    }
+    
+    .return-item:hover {
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .btn {
+        border-radius: 6px;
+        padding: 0.5rem 1.25rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .delete-item {
+        width: 100%;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .delete-item:hover {
+        background-color: #dc3545;
+        color: white !important;
+    }
+    
+    .alert {
+        border-radius: 6px;
+    }
+    
+    @media (max-width: 768px) {
+        .return-item > div {
+            margin-bottom: 1rem;
+        }
+        
+        .delete-item {
+            height: auto;
+            margin-top: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}

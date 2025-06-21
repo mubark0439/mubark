@@ -1,0 +1,285 @@
+{% extends "sales/base_sales.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+        --primary-lighter: rgba(5, 24, 55, 0.05);
+    }
+
+    .content-card {
+        border-radius: 12px;
+        border: 1px solid var(--primary-light);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+        background-color: var(--primary-color) !important;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: var(--primary-lighter);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: #0a2c5e;
+        border-color: #0a2c5e;
+    }
+
+    .status-badge {
+        padding: 0.35em 0.65em;
+        font-size: 0.85em;
+        font-weight: 500;
+        border-radius: 8px;
+    }
+
+    .badge-paid {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+
+    .badge-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+
+    .badge-cancelled {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+
+    .search-container {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .search-container .form-control {
+        padding-right: 40px;
+        border-radius: 8px;
+    }
+
+    .search-container .search-icon {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    .action-buttons .btn {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin: 0 2px;
+    }
+
+    @media (max-width: 768px) {
+        .table-responsive {
+            border: 0;
+        }
+        
+        .table thead {
+            display: none;
+        }
+        
+        .table tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 0.5rem;
+        }
+        
+        .table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f8f9fa;
+            padding: 0.75rem;
+            text-align: right;
+        }
+        
+        .table td:before {
+            content: attr(data-label);
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 10px;
+        }
+        
+        .table td:last-child {
+            border-bottom: none;
+        }
+        
+        .action-buttons {
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-container me-3" style="width: 50px; height: 50px; background-color: var(--primary-light); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                <i class="fas fa-file-invoice fa-lg" style="color: var(--primary-color);"></i>
+            </div>
+            <h2 class="page-title mb-0" style="color: var(--primary-color); font-weight: 600;">فواتير البيع</h2>
+        </div>
+        <a href="{% url 'sales:sale-create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> إنشاء فاتورة
+        </a>
+    </div>
+
+    <div class="card content-card shadow-lg">
+        <div class="card-header py-3 text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-file-invoice me-1"></i>
+                    قائمة فواتير البيع
+                </h6>
+                <div class="search-container">
+                    <input type="text" class="form-control" placeholder="ابحث عن فاتورة..." id="searchInput">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>التاريخ</th>
+                            <th>العميل</th>
+                            <th>المبلغ</th>
+                            <th>حالة الدفع</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sale in sales %}
+                        <tr>
+                            <td data-label="رقم الفاتورة">{{ sale.invoice_number }}</td>
+                            <td data-label="التاريخ">{{ sale.sale_date|date:"Y-m-d" }}</td>
+                            <td data-label="العميل">{{ sale.customer_name|default:"-" }}</td>
+                            <td data-label="المبلغ">{{ sale.total_amount }} ر.س</td>
+                            <td data-label="حالة الدفع">
+                                {% if sale.is_paid %}
+                                <span class="status-badge badge-paid">تم الدفع</span>
+                                {% elif sale.is_cancelled %}
+                                <span class="status-badge badge-cancelled">ملغاة</span>
+                                {% else %}
+                                <span class="status-badge badge-pending">قيد الانتظار</span>
+                                {% endif %}
+                            </td>
+                            <td data-label="الإجراءات">
+                                <div class="action-buttons d-flex">
+                                    <a href="{% url 'sales:sale-detail' sale.pk %}" class="btn btn-sm btn-info" title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if not sale.is_cancelled %}
+                                    <a href="{% url 'sales:sale-edit' sale.pk %}" class="btn btn-sm btn-warning" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                    <a href="{% url 'sales:sale-delete' sale.pk %}" 
+                                       class="btn btn-sm btn-danger" 
+                                       title="حذف"
+                                       onclick="return confirm('هل أنت متأكد من حذف الفاتورة رقم {{ sale.invoice_number }}؟')">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="alert alert-info">
+                                    لا توجد فواتير لعرضها
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% if is_paginated %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mt-4">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                            <i class="fas fa-chevron-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // البحث الفوري في الجدول
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = document.querySelectorAll('tbody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(filter) ? '' : 'none';
+            });
+        });
+    }
+
+    // إضافة بيانات-label للعرض على الجوال
+    if (window.innerWidth <= 768) {
+        const headers = document.querySelectorAll('thead th');
+        const cells = document.querySelectorAll('tbody td');
+        
+        headers.forEach((header, index) => {
+            const label = header.textContent.trim();
+            cells.forEach(cell => {
+                if (cell.cellIndex === index) {
+                    cell.setAttribute('data-label', label);
+                }
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

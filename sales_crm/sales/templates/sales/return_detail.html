@@ -1,0 +1,321 @@
+{% extends "sales/base_sales.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+        --primary-lighter: rgba(5, 24, 55, 0.05);
+    }
+
+    .card-header {
+        background-color: var(--primary-color) !important;
+    }
+
+    .status-badge {
+        padding: 0.5em 0.8em;
+        border-radius: 20px;
+        font-size: 0.85em;
+        font-weight: 500;
+    }
+
+    .badge.bg-success {
+        background-color: #28a745 !important;
+    }
+
+    .badge.bg-info {
+        background-color: #17a2b8 !important;
+    }
+
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+    }
+
+    .badge.bg-secondary {
+        background-color: #6c757d !important;
+    }
+
+    .table thead th {
+        background-color: var(--primary-light);
+        font-weight: 500;
+    }
+
+    .table-active {
+        background-color: var(--primary-lighter) !important;
+        font-weight: bold;
+    }
+
+    .action-btn {
+        transition: all 0.2s;
+        min-width: 100px;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .info-card {
+        border-left: 4px solid var(--primary-color);
+        background-color: #f8f9fa;
+    }
+
+    .reason-card {
+        border-left: 4px solid #17a2b8;
+        background-color: #f8f9fa;
+    }
+
+    .notes-card .card-header {
+        background-color: #f8f9fa !important;
+        border-bottom: 1px solid #dee2e6;
+        color: var(--primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="card mb-4">
+        <div class="card-header py-3 text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-undo me-2"></i>
+                    تفاصيل المرتجع #{{ return_entry.return_number }}
+                </h6>
+                <div>
+                    <button onclick="printReturn()" class="btn btn-sm btn-light action-btn">
+                        <i class="fas fa-print me-1"></i> طباعة الإشعار
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body" id="returnContent">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card info-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-file-invoice me-2"></i>معلومات الفاتورة الأصلية</h5>
+                            <p class="card-text">
+                                <strong>رقم الفاتورة:</strong> 
+                                <a href="{% url 'sales:sale-detail' pk=return_entry.sale.pk %}" class="text-primary">
+                                    {{ return_entry.sale.invoice_number }}
+                                </a><br>
+                                <strong>تاريخ الفاتورة:</strong> {{ return_entry.sale.sale_date|date:"Y-m-d" }}<br>
+                                <strong>إجمالي الفاتورة:</strong> {{ return_entry.sale.total_amount }} ر.س
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card info-card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-exchange-alt me-2"></i>معلومات المرتجع</h5>
+                            <p class="card-text">
+                                <strong>رقم المرتجع:</strong> {{ return_entry.return_number }}<br>
+                                <strong>التاريخ:</strong> {{ return_entry.return_date|date:"Y-m-d" }}<br>
+                                <strong>الحالة:</strong>
+                                <span class="status-badge badge 
+                                    {% if return_entry.status == 'completed' %}bg-success
+                                    {% elif return_entry.status == 'approved' %}bg-info
+                                    {% elif return_entry.status == 'rejected' %}bg-danger
+                                    {% else %}bg-secondary{% endif %}">
+                                    {{ return_entry.get_status_display }}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <div class="card reason-card">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-comment-alt me-2"></i>سبب الإرجاع</h5>
+                        <p class="card-text">{{ return_entry.reason }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th width="5%">#</th>
+                            <th width="45%">المنتج</th>
+                            <th width="15%">الكمية المرتجعة</th>
+                            <th width="15%">سعر الوحدة</th>
+                            <th width="20%">المجموع</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in return_entry.items.all %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ item.sale_item.product.name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.unit_price }} ر.س</td>
+                            <td>{{ item.total_price }} ر.س</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-active">
+                            <th colspan="4" class="text-end">الإجمالي:</th>
+                            <th>{{ return_entry.total_amount }} ر.س</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            {% if return_entry.notes %}
+            <div class="card notes-card mb-4">
+                <div class="card-header">
+                    <h6 class="m-0"><i class="fas fa-sticky-note me-2"></i>ملاحظات</h6>
+                </div>
+                <div class="card-body">
+                    {{ return_entry.notes }}
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'sales:sale-detail' pk=return_entry.sale.pk %}" class="btn btn-secondary action-btn">
+                    <i class="fas fa-arrow-left me-1"></i> العودة للفاتورة
+                </a>
+                <div>
+                    {% if return_entry.status == 'pending' %}
+                    <form action="{% url 'sales:return-approve' pk=return_entry.pk %}" method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success action-btn me-2">
+                            <i class="fas fa-check me-1"></i> تأكيد المرتجع
+                        </button>
+                    </form>
+                    {% endif %}
+                    
+                    {% if return_entry.status == 'pending' %}
+                    <a href="{% url 'sales:return-edit' pk=return_entry.pk %}" class="btn btn-primary action-btn me-2">
+                        <i class="fas fa-edit me-1"></i> تعديل
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'sales:return-delete' pk=return_entry.pk %}" class="btn btn-danger action-btn">
+                        <i class="fas fa-trash me-1"></i> حذف
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function printReturn() {
+    const printWindow = window.open('', '_blank');
+    
+    // استخراج المحتوى المطلوب فقط (استثناء الأزرار والعناصر غير المرغوب فيها)
+    const returnContent = document.getElementById('returnContent').cloneNode(true);
+    
+    // إزالة الأزرار والعناصر غير المرغوب فيها
+    const elementsToRemove = returnContent.querySelectorAll('.action-btn, .d-flex.justify-content-between');
+    elementsToRemove.forEach(el => el.remove());
+    
+    // إضافة معلومات الشركة
+    const companyInfo = `
+        <div style="position: relative; min-height: 100vh; padding: 15mm;">
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                opacity: 0.1;
+                z-index: -1;
+            ">
+                <img src="/static/images/default-product1.png" alt="شعار المتجر" style="height: 400px;">
+            </div>
+            
+            <div style="position: relative; z-index: 1;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="font-weight: bold; margin-bottom: 5px;">شركة المثال للتجارة</h2>
+                    <p style="margin: 3px 0;">الرقم الضريبي: 1234567890</p>
+                    <p style="margin: 3px 0;">العنوان: الرياض - شارع الملك فهد - مركز التجارة</p>
+                    <p style="margin: 3px 0;">هاتف: 0112345678 | البريد الإلكتروني: info@example.com</p>
+                    <hr style="margin: 15px 0;">
+                    <h3 style="font-weight: bold; margin-bottom: 5px;">إشعار مرتجع</h3>
+                    <p style="margin: 3px 0;">رقم المرتجع: {{ return_entry.return_number }} | التاريخ: {{ return_entry.return_date|date:"Y-m-d" }}</p>
+                </div>
+                
+                ${returnContent.innerHTML}
+
+                <div style="text-align: center; margin-top: 20px; font-size: 10pt; color: #666;">
+                    <p style="margin: 3px 0;">شكراً لثقتكم بنا - نرحب باستفساراتكم على الهاتف: 0112345678</p>
+                    <p style="margin: 3px 0;">هذا الإشعار صادر من نظام إلكتروني ولا يحتاج إلى ختم</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html dir="rtl">
+        <head>
+            <title>مرتجع #{{ return_entry.return_number }}</title>
+            <meta charset="UTF-8">
+            <style>
+                body { 
+                    font-family: Arial; 
+                    margin: 0;
+                    background: transparent;
+                }
+                table { 
+                    width: 100%; 
+                    border-collapse: collapse; 
+                }
+                th, td { 
+                    padding: 6px; 
+                    border: 1px solid #ddd; 
+                }
+                .text-end { 
+                    text-align: left; 
+                }
+                .table-active { 
+                    font-weight: bold; 
+                }
+                @page {
+                    size: A4;
+                    margin: 15mm;
+                }
+                .card {
+                    border: 1px solid #eee;
+                    border-radius: 5px;
+                    margin-bottom: 15px;
+                    padding: 15px;
+                }
+                .info-card {
+                    border-left: 4px solid #051837;
+                }
+                .reason-card {
+                    border-left: 4px solid #17a2b8;
+                }
+                .no-print {
+                    display: none !important;
+                }
+            </style>
+        </head>
+        <body>
+            ${companyInfo}
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                        window.close();
+                    }, 200);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+}
+</script>
+{% endblock %}

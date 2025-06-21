@@ -1,0 +1,489 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}تفاصيل مرتجع شراء - {{ return_entry.return_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- العنوان وأزرار الإجراءات -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <div class="icon-container me-3">
+                <i class="fas fa-undo fa-lg"></i>
+            </div>
+            <h1 class="page-title mb-0">تفاصيل مرتجع شراء - {{ return_entry.return_number }}</h1>
+        </div>
+        <div class="action-buttons">
+            <a href="{% url 'purchases:return-list' %}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i> رجوع للقائمة
+            </a>
+            <button onclick="printReturn()" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-print me-2"></i> طباعة
+            </button>
+            {% if return_entry.status == 'pending' %}
+            <a href="{% url 'purchases:return-delete' pk=return_entry.pk %}" class="btn btn-outline-danger ms-2">
+                <i class="fas fa-trash me-2"></i> حذف
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- بطاقة تفاصيل المرتجع -->
+    <div class="card content-card shadow-lg">
+        <div class="card-header py-3 text-white" style="background-color: #051837;">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <h6 class="m-0 font-weight-bold">معلومات المرتجع</h6>
+                </div>
+                {% if return_entry.status == 'pending' %}
+                <div>
+                    <a href="{% url 'purchases:return-edit' pk=return_entry.pk %}" 
+                       class="btn btn-sm btn-warning me-2">
+                        <i class="fas fa-edit me-1"></i> تعديل
+                    </a>
+                    <a href="{% url 'purchases:return-approve' pk=return_entry.pk %}" 
+                       class="btn btn-sm btn-success">
+                        <i class="fas fa-check me-1"></i> تأكيد
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card-body" id="returnContent">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h5 class="info-card-header">معلومات أمر الشراء</h5>
+                        <div class="info-card-body">
+                            <p><strong>رقم الأمر:</strong> {{ return_entry.purchase_order.id }}</p>
+                            <p><strong>المورد:</strong> {{ return_entry.purchase_order.supplier.name }}</p>
+                            <p><strong>تاريخ الطلب:</strong> {{ return_entry.purchase_order.order_date|date:"Y-m-d" }}</p>
+                            <p><strong>المبلغ الإجمالي:</strong> {{ return_entry.purchase_order.total }} ر.س</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-card">
+                        <h5 class="info-card-header">معلومات المرتجع</h5>
+                        <div class="info-card-body">
+                            <p><strong>رقم المرتجع:</strong> {{ return_entry.return_number }}</p>
+                            <p><strong>التاريخ:</strong> {{ return_entry.return_date|date:"Y-m-d" }}</p>
+                            <p><strong>الحالة:</strong> 
+                                <span class="badge 
+                                    {% if return_entry.status == 'completed' %}bg-success
+                                    {% elif return_entry.status == 'approved' %}bg-info
+                                    {% elif return_entry.status == 'rejected' %}bg-danger
+                                    {% else %}bg-warning{% endif %}">
+                                    {{ return_entry.get_status_display }}
+                                </span>
+                            </p>
+                            <p><strong>المبلغ الإجمالي:</strong> {{ return_entry.total_amount }} ر.س</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card mb-4">
+                <h5 class="info-card-header">سبب الإرجاع</h5>
+                <div class="info-card-body">
+                    <div class="alert alert-light">
+                        {{ return_entry.reason }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card mb-4">
+                <h5 class="info-card-header">بنود المرتجع</h5>
+                <div class="info-card-body">
+                    <div class="table-responsive">
+                        <table class="table product-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>المنتج</th>
+                                    <th>الكمية المشتراة</th>
+                                    <th>الكمية المرتجعة</th>
+                                    <th>سعر الوحدة</th>
+                                    <th>المجموع</th>
+                                    <th>سبب الإرجاع</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in return_items %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ item.order_item.product.name }}</td>
+                                    <td>{{ item.order_item.quantity }}</td>
+                                    <td>{{ item.quantity }}</td>
+                                    <td>{{ item.unit_cost }} ر.س</td>
+                                    <td>{{ item.total_cost }} ر.س</td>
+                                    <td>{{ item.reason }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">
+                                        <div class="alert alert-info">
+                                            لا توجد بنود في هذا المرتجع
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-active">
+                                    <td colspan="5" class="text-end"><strong>الإجمالي:</strong></td>
+                                    <td colspan="2">{{ return_entry.total_amount }} ر.س</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {% if return_entry.notes %}
+            <div class="info-card">
+                <h5 class="info-card-header">ملاحظات</h5>
+                <div class="info-card-body">
+                    <div class="alert alert-light">
+                        {{ return_entry.notes }}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    /* أنماط مشتركة مع الملفات الأخرى */
+    :root {
+        --primary-color: #051837;
+        --primary-light: rgba(5, 24, 55, 0.1);
+        --primary-lighter: rgba(5, 24, 55, 0.05);
+    }
+
+    .icon-container {
+        width: 50px;
+        height: 50px;
+        background-color: var(--primary-light);
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .icon-container i {
+        color: var(--primary-color);
+    }
+    
+    .page-title {
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+    
+    .content-card {
+        border-radius: 12px;
+        border: 1px solid var(--primary-light);
+        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+    }
+    
+    .card-header {
+        border-radius: 12px 12px 0 0 !important;
+    }
+
+    .info-card {
+        border: 1px solid #eee;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-card-header {
+        background-color: #f8f9fa;
+        padding: 0.75rem 1.25rem;
+        border-bottom: 1px solid #eee;
+        border-radius: 8px 8px 0 0;
+        color: var(--primary-color);
+        font-weight: 600;
+    }
+
+    .info-card-body {
+        padding: 1.25rem;
+    }
+
+    .product-table {
+        width: 100%;
+        margin-bottom: 0;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .product-table thead th {
+        background-color: #f8f9fa;
+        color: var(--primary-color);
+        font-weight: 600;
+        padding: 12px 15px;
+        border-bottom: 2px solid var(--primary-color);
+        vertical-align: middle;
+    }
+    
+    .product-table tbody td {
+        padding: 12px 15px;
+        vertical-align: middle;
+        border-bottom: 1px solid #eee;
+    }
+
+    .badge {
+        padding: 0.5em 0.8em;
+        border-radius: 8px;
+        font-weight: 500;
+    }
+
+    .btn-outline-primary {
+        border: 2px solid var(--primary-color);
+        color: var(--primary-color);
+        font-weight: 500;
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .btn-outline-danger {
+        border: 2px solid #dc3545;
+        color: #dc3545;
+        font-weight: 500;
+        border-radius: 8px;
+        padding: 0.6rem 1.25rem;
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .action-buttons {
+            width: 100%;
+            flex-direction: column;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-outline-primary, .btn-outline-danger {
+            width: 100%;
+            margin: 0.25rem 0;
+            text-align: center;
+        }
+        
+        .product-table thead {
+            display: none;
+        }
+        
+        .product-table tbody tr {
+            display: block;
+            margin-bottom: 1.5rem;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 0.5rem;
+            position: relative;
+        }
+        
+        .product-table td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f8f9fa;
+            padding: 0.75rem;
+            text-align: right;
+        }
+        
+        .product-table td:before {
+            content: attr(data-label);
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-left: 10px;
+        }
+        
+        .product-table td:last-child {
+            border-bottom: none;
+        }
+    }
+
+    /* أنماط الطباعة */
+    @media print {
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 12pt;
+            background: transparent;
+        }
+        @page {
+            size: A4;
+            margin: 15mm;
+        }
+        .container-fluid {
+            padding: 0;
+        }
+        .card {
+            border: none;
+            box-shadow: none;
+            margin: 0;
+        }
+        .card-header, .btn, .action-buttons, .icon-container {
+            display: none;
+        }
+        #returnContent {
+            padding: 0;
+        }
+        .info-card {
+            border: none;
+            margin-bottom: 10mm;
+        }
+        .info-card-header {
+            background-color: transparent !important;
+            color: #000 !important;
+            border-bottom: 2px solid #000;
+            padding: 3mm 0;
+            margin-bottom: 3mm;
+        }
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .product-table th, .product-table td {
+            padding: 6px;
+            border: 1px solid #ddd;
+        }
+        .product-table thead th {
+            background-color: #f5f5f5 !important;
+            color: #000 !important;
+        }
+        .badge {
+            color: #000 !important;
+            background-color: transparent !important;
+            border: 1px solid #000;
+        }
+        .alert-light {
+            background-color: transparent;
+            border: none;
+            padding: 0;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // إضافة بيانات-label للعرض على الجوال
+    if (window.innerWidth <= 768) {
+        const headers = document.querySelectorAll('.product-table thead th');
+        const cells = document.querySelectorAll('.product-table tbody td');
+        
+        headers.forEach((header, index) => {
+            const label = header.textContent.trim();
+            cells.forEach(cell => {
+                if (cell.cellIndex === index) {
+                    cell.setAttribute('data-label', label);
+                }
+            });
+        });
+    }
+});
+
+function printReturn() {
+    const printWindow = window.open('', '_blank');
+    const returnContent = document.getElementById('returnContent').innerHTML;
+    
+    const companyInfo = `
+        <div style="
+            position: relative;
+            min-height: 100vh;
+            padding: 15mm;
+        ">
+            <!-- الخلفية الشفافة للشعار -->
+            <div style="
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                opacity: 0.1;
+                z-index: -1;
+            ">
+                <img src="/static/images/default-product1.png" alt="شعار المتجر" style="height: 400px;">
+            </div>
+            
+            <!-- محتوى المرتجع -->
+            <div style="position: relative; z-index: 1;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h2 style="font-weight: bold; margin-bottom: 5px;">شركة المثال للتجارة</h2>
+                    <p style="margin: 3px 0;">الرقم الضريبي: 1234567890</p>
+                    <p style="margin: 3px 0;">العنوان: الرياض - شارع الملك فهد - مركز التجارة</p>
+                    <p style="margin: 3px 0;">هاتف: 0112345678 | البريد الإلكتروني: info@example.com</p>
+                    <hr style="margin: 15px 0;">
+                    <h3 style="font-weight: bold; margin-bottom: 5px;">إشعار مرتجع شراء</h3>
+                    <p style="margin: 3px 0;">رقم المرتجع: {{ return_entry.return_number }} | التاريخ: {{ return_entry.return_date|date:"Y-m-d" }}</p>
+                </div>
+                
+                ${returnContent}
+
+                <div style="text-align: center; margin-top: 20px; font-size: 10pt; color: #666;">
+                    <p style="margin: 3px 0;">هذا المستند صادر من نظام إلكتروني ولا يحتاج إلى ختم</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html dir="rtl">
+        <head>
+            <title>مرتجع شراء #{{ return_entry.return_number }}</title>
+            <meta charset="UTF-8">
+            <style>
+                body { 
+                    font-family: Arial; 
+                    margin: 0;
+                    background: transparent;
+                }
+                table { 
+                    width: 100%; 
+                    border-collapse: collapse; 
+                }
+                th, td { 
+                    padding: 6px; 
+                    border: 1px solid #ddd; 
+                }
+                .text-end { 
+                    text-align: left; 
+                }
+                .table-active { 
+                    font-weight: bold; 
+                }
+                @page {
+                    size: A4;
+                    margin: 15mm;
+                }
+            </style>
+        </head>
+        <body>
+            ${companyInfo}
+            <script>
+                window.onload = function() {
+                    setTimeout(function() {
+                        window.print();
+                        window.close();
+                    }, 200);
+                };
+            <\/script>
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+}
+</script>
+{% endblock %}
