@@ -4,13 +4,12 @@ services:
     runtime: python
     buildCommand: |
       pip install -r requirements.txt
+      python manage.py migrate
       python manage.py collectstatic --noinput
-    startCommand: 'sales_crm.wsgi.application'  # تصحيح هنا
+    startCommand: gunicorn sales_crm.wsgi:application
     env: python
     plan: free
     envVars:
-      - key: PYTHONPATH
-        value: /opt/render/project/src
       - key: DJANGO_SETTINGS_MODULE
         value: sales_crm.settings
       - key: SECRET_KEY
